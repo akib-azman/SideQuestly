@@ -3,12 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SideQuestly - Real-Life Side Quest Generator</title>
+<title>SideQuestly</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════════════════════════════
-   DESIGN SYSTEM - Edit these variables to retheme the whole app
-   ═══════════════════════════════════════════════════════════════ */
 :root {
   --bg:          #07080c;
   --surface:     #0e1018;
@@ -34,13 +31,12 @@
   --radius-lg:   16px;
   --radius-xl:   22px;
 
-  /* Difficulty colours */
-  --warmup: #00e676;
-  --warmup-soft: rgba(0,230,118,0.1);
-  --adventure: #ffb300;
-  --adventure-soft: rgba(255,179,0,0.1);
-  --legend: #ff4757;
-  --legend-soft: rgba(255,71,87,0.1);
+  --easy:      #00e676;
+  --easy-soft: rgba(0,230,118,0.1);
+  --medium:    #ffb300;
+  --medium-soft: rgba(255,179,0,0.1);
+  --hard:      #ff4757;
+  --hard-soft: rgba(255,71,87,0.1);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -54,23 +50,18 @@ body {
   overflow-x: hidden;
 }
 
-/* ── SCANLINE OVERLAY ── */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.03) 2px,
-    rgba(0,0,0,0.03) 4px
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
   );
   pointer-events: none;
   z-index: 1000;
 }
 
-/* ── GRID BG ── */
 body::after {
   content: '';
   position: fixed;
@@ -83,9 +74,25 @@ body::after {
   z-index: 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   LAYOUT
-   ═══════════════════════════════════════════════════════════════ */
+/* ── CREDIT WATERMARK ── */
+.credit-tag {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+  z-index: 9998;
+  opacity: 0.6;
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--surface);
+  pointer-events: none;
+}
+.credit-tag span { color: var(--cyan); }
+
 .app {
   position: relative;
   z-index: 1;
@@ -94,7 +101,6 @@ body::after {
   padding: 0 1.5rem 4rem;
 }
 
-/* ── HEADER ── */
 header {
   padding: 2rem 0 1.5rem;
   display: flex;
@@ -104,11 +110,7 @@ header {
   margin-bottom: 2rem;
 }
 
-.logo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+.logo { display: flex; flex-direction: column; gap: 2px; }
 .logo-name {
   font-family: 'Rajdhani', sans-serif;
   font-size: 1.9rem;
@@ -125,14 +127,8 @@ header {
   text-transform: uppercase;
 }
 
-.header-stats {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-.hstat {
-  text-align: center;
-}
+.header-stats { display: flex; gap: 1.5rem; align-items: center; }
+.hstat { text-align: center; }
 .hstat-val {
   font-family: 'Rajdhani', sans-serif;
   font-size: 1.4rem;
@@ -147,25 +143,9 @@ header {
   letter-spacing: 0.08em;
 }
 
-/* XP bar */
-.xp-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 140px;
-}
-.xp-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.65rem;
-  color: var(--text3);
-}
-.xp-bar-bg {
-  height: 4px;
-  background: var(--surface3);
-  border-radius: 10px;
-  overflow: hidden;
-}
+.xp-wrap { display: flex; flex-direction: column; gap: 4px; min-width: 140px; }
+.xp-row { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text3); }
+.xp-bar-bg { height: 4px; background: var(--surface3); border-radius: 10px; overflow: hidden; }
 .xp-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--cyan), #00b8d4);
@@ -174,7 +154,6 @@ header {
   box-shadow: 0 0 8px var(--cyan-glow);
 }
 
-/* ── MAIN GRID ── */
 .main-grid {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -182,14 +161,7 @@ header {
   align-items: start;
 }
 
-/* ── SIDEBAR ── */
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  position: sticky;
-  top: 1rem;
-}
+.sidebar { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 1rem; }
 
 .panel {
   background: var(--surface);
@@ -218,7 +190,6 @@ header {
   box-shadow: 0 0 6px var(--cyan-glow);
 }
 
-/* Difficulty filters */
 .filter-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
 .filter-label { font-size: 0.7rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
 
@@ -239,20 +210,15 @@ header {
   width: 100%;
 }
 .diff-btn:hover { border-color: var(--border2); color: var(--text); }
-.diff-btn.active-warmup    { background: var(--warmup-soft);    border-color: var(--warmup);    color: var(--warmup); }
-.diff-btn.active-adventure { background: var(--adventure-soft); border-color: var(--adventure); color: var(--adventure); }
-.diff-btn.active-legend    { background: var(--legend-soft);    border-color: var(--legend);    color: var(--legend); }
+.diff-btn.active-easy   { background: var(--easy-soft);   border-color: var(--easy);   color: var(--easy); }
+.diff-btn.active-medium { background: var(--medium-soft); border-color: var(--medium); color: var(--medium); }
+.diff-btn.active-hard   { background: var(--hard-soft);   border-color: var(--hard);   color: var(--hard); }
 
-.diff-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.dot-warmup    { background: var(--warmup); }
-.dot-adventure { background: var(--adventure); }
-.dot-legend    { background: var(--legend); }
+.diff-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-easy   { background: var(--easy); }
+.dot-medium { background: var(--medium); }
+.dot-hard   { background: var(--hard); }
 
-/* Env filter */
 .env-btns { display: flex; gap: 6px; }
 .env-btn {
   flex: 1;
@@ -270,7 +236,6 @@ header {
 .env-btn:hover { border-color: var(--border2); color: var(--text); }
 .env-btn.active { background: var(--cyan-soft); border-color: var(--cyan); color: var(--cyan); }
 
-/* Category filter */
 .cat-grid { display: flex; flex-wrap: wrap; gap: 6px; }
 .cat-btn {
   padding: 4px 10px;
@@ -285,39 +250,18 @@ header {
 .cat-btn:hover { border-color: var(--border2); color: var(--text2); }
 .cat-btn.active { background: var(--cyan-soft); border-color: var(--cyan); color: var(--cyan); }
 
-/* Streak */
-.streak-display {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.streak-flame {
-  font-size: 1.8rem;
-  animation: flicker 2s ease infinite alternate;
-}
+.streak-display { display: flex; align-items: center; gap: 10px; }
+.streak-flame { font-size: 1.8rem; animation: flicker 2s ease infinite alternate; }
 @keyframes flicker {
   from { filter: brightness(1); }
   to   { filter: brightness(1.3) drop-shadow(0 0 6px #ff6d00); }
 }
-.streak-num {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--amber);
-  line-height: 1;
-}
+.streak-num { font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; color: var(--amber); line-height: 1; }
 .streak-label { font-size: 0.7rem; color: var(--text3); }
 
-/* ── MAIN AREA ── */
 .main-area { display: flex; flex-direction: column; gap: 1.5rem; }
 
-/* ── GENERATE BUTTON ── */
-.generate-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
+.generate-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 
 .btn-generate {
   position: relative;
@@ -352,13 +296,7 @@ header {
 
 .generate-hint { font-size: 0.75rem; color: var(--text3); }
 
-/* ── QUEST CARD ── */
-.quest-card-wrap {
-  perspective: 1000px;
-  min-height: 280px;
-  display: flex;
-  align-items: stretch;
-}
+.quest-card-wrap { perspective: 1000px; min-height: 280px; display: flex; align-items: stretch; }
 
 .quest-card {
   width: 100%;
@@ -375,7 +313,6 @@ header {
 }
 .quest-card.visible { display: flex; }
 
-/* Corner accent glow */
 .quest-card::before {
   content: '';
   position: absolute;
@@ -391,12 +328,7 @@ header {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.quest-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
+.quest-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 
 .quest-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .badge {
@@ -408,20 +340,15 @@ header {
   border-radius: 100px;
   border: 1px solid transparent;
 }
-.badge-warmup    { background: var(--warmup-soft);    border-color: var(--warmup);    color: var(--warmup); }
-.badge-adventure { background: var(--adventure-soft); border-color: var(--adventure); color: var(--adventure); }
-.badge-legend    { background: var(--legend-soft);    border-color: var(--legend);    color: var(--legend); }
+.badge-easy   { background: var(--easy-soft);   border-color: var(--easy);   color: var(--easy); }
+.badge-medium { background: var(--medium-soft); border-color: var(--medium); color: var(--medium); }
+.badge-hard   { background: var(--hard-soft);   border-color: var(--hard);   color: var(--hard); }
 .badge-indoor  { background: var(--purple-soft); border-color: var(--purple); color: var(--purple); }
 .badge-outdoor { background: var(--green-soft);  border-color: var(--green);  color: var(--green); }
 .badge-mixed   { background: var(--cyan-soft);   border-color: var(--cyan);   color: var(--cyan); }
 .badge-cat     { background: var(--surface2); border-color: var(--border2); color: var(--text2); }
 
-.quest-rarity {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--text3);
-  white-space: nowrap;
-}
+.quest-rarity { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--text3); white-space: nowrap; }
 
 .quest-title {
   font-family: 'Rajdhani', sans-serif;
@@ -432,12 +359,7 @@ header {
   line-height: 1.1;
 }
 
-.quest-desc {
-  font-size: 0.92rem;
-  color: var(--text2);
-  line-height: 1.75;
-  font-weight: 300;
-}
+.quest-desc { font-size: 0.92rem; color: var(--text2); line-height: 1.75; font-weight: 300; }
 
 .quest-meta {
   display: flex;
@@ -447,13 +369,7 @@ header {
   border-radius: var(--radius);
   border: 1px solid var(--border);
 }
-.quest-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: var(--text2);
-}
+.quest-meta-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text2); }
 .meta-icon { font-size: 0.9rem; }
 
 .quest-twist {
@@ -468,7 +384,6 @@ header {
 }
 .quest-twist strong { font-weight: 500; letter-spacing: 0.04em; }
 
-/* ── XP REWARD BADGE ── */
 .xp-reward {
   position: absolute;
   top: 1.5rem; right: 1.5rem;
@@ -478,26 +393,10 @@ header {
   padding: 0.4rem 0.7rem;
   text-align: center;
 }
-.xp-reward-val {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--cyan);
-  line-height: 1;
-}
-.xp-reward-label {
-  font-size: 0.6rem;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
+.xp-reward-val { font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--cyan); line-height: 1; }
+.xp-reward-label { font-size: 0.6rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
 
-/* ── ACTION BUTTONS ── */
-.quest-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+.quest-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .btn {
   flex: 1;
@@ -515,29 +414,13 @@ header {
   letter-spacing: 0.02em;
 }
 .btn:hover { background: var(--surface2); color: var(--text); }
-
-.btn-accept {
-  background: var(--green-soft);
-  border-color: var(--green);
-  color: var(--green);
-}
+.btn-accept { background: var(--green-soft); border-color: var(--green); color: var(--green); }
 .btn-accept:hover { background: var(--green); color: var(--bg); }
-
-.btn-save {
-  background: var(--cyan-soft);
-  border-color: var(--cyan);
-  color: var(--cyan);
-}
+.btn-save { background: var(--cyan-soft); border-color: var(--cyan); color: var(--cyan); }
 .btn-save:hover { background: var(--cyan); color: var(--bg); }
-
-.btn-reroll {
-  background: var(--amber-soft);
-  border-color: var(--amber);
-  color: var(--amber);
-}
+.btn-reroll { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
 .btn-reroll:hover { background: var(--amber); color: var(--bg); }
 
-/* ── EMPTY STATE ── */
 .empty-state {
   width: 100%;
   background: var(--surface);
@@ -548,84 +431,42 @@ header {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.75rem;
   color: var(--text3);
 }
-.empty-icon { font-size: 2.5rem; opacity: 0.3; }
-.empty-state h3 { font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; letter-spacing: 0.08em; color: var(--text3); }
-.empty-state p  { font-size: 0.8rem; text-align: center; max-width: 220px; line-height: 1.5; }
+.empty-icon { font-size: 3rem; opacity: 0.4; }
+.empty-state h3 { font-family: 'Rajdhani', sans-serif; font-size: 1rem; letter-spacing: 0.12em; }
+.empty-state p { font-size: 0.8rem; }
 
-/* ── TABS ── */
-.tabs {
-  display: flex;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 4px;
-  gap: 4px;
-}
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
 .tab {
-  flex: 1;
-  padding: 0.5rem;
-  border-radius: var(--radius);
+  padding: 0.5rem 1.2rem;
   border: none;
   background: transparent;
   color: var(--text3);
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   cursor: pointer;
-  transition: all 0.18s;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  margin-bottom: -1px;
 }
-.tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
-.tab:hover:not(.active) { color: var(--text2); }
+.tab:hover { color: var(--text2); }
+.tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
 
-/* ── TAB CONTENT ── */
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* ── HISTORY LIST ── */
-.history-list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
-.history-list::-webkit-scrollbar { width: 3px; }
-.history-list::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
-
-.history-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.65rem 0.9rem;
-  font-size: 0.82rem;
-  animation: fadeIn 0.2s ease;
-}
-@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
-
-.history-status {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
+.history-list, .saved-list { display: flex; flex-direction: column; gap: 6px; padding: 0.5rem 0; }
+.history-item { display: flex; align-items: center; gap: 10px; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+.history-status { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .status-accepted { background: var(--green); }
 .status-skipped  { background: var(--text3); }
 .status-saved    { background: var(--cyan); }
+.history-name { flex: 1; font-size: 0.82rem; color: var(--text2); }
+.history-diff { font-size: 0.7rem; color: var(--text3); white-space: nowrap; }
 
-.history-name { flex: 1; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.history-diff { font-size: 0.68rem; font-family: 'DM Mono', monospace; color: var(--text3); white-space: nowrap; }
-
-/* ── SAVED LIST ── */
-.saved-list { display: flex; flex-direction: column; gap: 8px; }
-.saved-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.75rem 1rem;
-  animation: fadeIn 0.2s ease;
-}
+.saved-item { display: flex; align-items: center; gap: 10px; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
 .saved-info { flex: 1; min-width: 0; }
 .saved-name { font-size: 0.875rem; color: var(--text); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .saved-meta { font-size: 0.7rem; color: var(--text3); }
@@ -642,7 +483,6 @@ header {
 }
 .btn-remove:hover { background: var(--red-soft); border-color: var(--red); color: var(--red); }
 
-/* ── TOAST ── */
 #toast {
   position: fixed;
   bottom: 2rem;
@@ -662,7 +502,6 @@ header {
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ── LEVEL UP FLASH ── */
 .level-flash {
   position: fixed;
   inset: 0;
@@ -674,15 +513,8 @@ header {
 }
 .level-flash.show { opacity: 1; }
 
-/* ── EMPTY LIST ── */
-.empty-list {
-  padding: 2rem;
-  text-align: center;
-  color: var(--text3);
-  font-size: 0.82rem;
-}
+.empty-list { padding: 2rem; text-align: center; color: var(--text3); font-size: 0.82rem; }
 
-/* ── DAILY QUEST BANNER ── */
 .daily-banner {
   background: var(--surface);
   border: 1px solid rgba(0,229,255,0.2);
@@ -695,13 +527,7 @@ header {
 }
 .daily-icon { font-size: 1.5rem; }
 .daily-body { flex: 1; }
-.daily-label {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--cyan);
-  margin-bottom: 2px;
-}
+.daily-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cyan); margin-bottom: 2px; }
 .daily-title { font-size: 0.9rem; font-weight: 500; color: var(--text); }
 .daily-xp {
   font-family: 'DM Mono', monospace;
@@ -726,14 +552,14 @@ header {
 
 <div class="level-flash" id="level-flash"></div>
 <div id="toast"></div>
+<div class="credit-tag">Made by <span>Akib Azman</span></div>
 
 <div class="app">
 
-  <!-- ══════════ HEADER ══════════ -->
   <header>
     <div class="logo">
       <div class="logo-name">⚔ SideQuestly</div>
-      <div class="logo-sub">Real-Life Side Quest Generator</div>
+      <div class="logo-sub">Real-Life Side Quest Generator — v1.0.2</div>
     </div>
     <div class="header-stats">
       <div class="hstat">
@@ -756,13 +582,10 @@ header {
     </div>
   </header>
 
-  <!-- ══════════ MAIN GRID ══════════ -->
   <div class="main-grid">
 
-    <!-- ── SIDEBAR ── -->
     <aside class="sidebar">
 
-      <!-- Daily Quest -->
       <div class="daily-banner" id="daily-banner">
         <div class="daily-icon">⭐</div>
         <div class="daily-body">
@@ -772,19 +595,18 @@ header {
         <div class="daily-xp" id="daily-xp">+50 XP</div>
       </div>
 
-      <!-- Difficulty Filter -->
       <div class="panel">
         <div class="panel-title">Difficulty</div>
         <div class="filter-group">
           <div class="filter-label">Select tiers</div>
-          <button class="diff-btn active-warmup"    data-diff="warmup"    onclick="toggleDiff(this)">
-            <div class="diff-dot dot-warmup"></div> Warm-up Quests
+          <button class="diff-btn active-easy"   data-diff="easy"   onclick="toggleDiff(this)">
+            <div class="diff-dot dot-easy"></div> Easy Quests
           </button>
-          <button class="diff-btn active-adventure" data-diff="adventure" onclick="toggleDiff(this)">
-            <div class="diff-dot dot-adventure"></div> Adventure Quests
+          <button class="diff-btn active-medium" data-diff="medium" onclick="toggleDiff(this)">
+            <div class="diff-dot dot-medium"></div> Medium Quests
           </button>
-          <button class="diff-btn active-legend"    data-diff="legend"    onclick="toggleDiff(this)">
-            <div class="diff-dot dot-legend"></div> Legend Quests
+          <button class="diff-btn active-hard"   data-diff="hard"   onclick="toggleDiff(this)">
+            <div class="diff-dot dot-hard"></div> Hard Quests
           </button>
         </div>
 
@@ -796,13 +618,11 @@ header {
         </div>
       </div>
 
-      <!-- Category Filter -->
       <div class="panel">
         <div class="panel-title">Category</div>
         <div class="cat-grid" id="cat-grid"></div>
       </div>
 
-      <!-- Streak -->
       <div class="panel">
         <div class="panel-title">Streak</div>
         <div class="streak-display">
@@ -816,10 +636,8 @@ header {
 
     </aside>
 
-    <!-- ── MAIN AREA ── -->
     <div class="main-area">
 
-      <!-- Generate -->
       <div class="generate-wrap">
         <button class="btn-generate" onclick="generateQuest()">
           <span>⚡ Generate Quest</span>
@@ -827,7 +645,6 @@ header {
         <div class="generate-hint" id="generate-hint">Select filters and roll your fate</div>
       </div>
 
-      <!-- Quest Card -->
       <div class="quest-card-wrap">
         <div class="empty-state" id="empty-state">
           <div class="empty-icon">🗺</div>
@@ -859,7 +676,6 @@ header {
         </div>
       </div>
 
-      <!-- Tabs: History / Saved -->
       <div class="tabs">
         <button class="tab active" onclick="switchTab('history', this)">Quest History</button>
         <button class="tab"        onclick="switchTab('saved', this)">Saved Quests</button>
@@ -883,333 +699,941 @@ header {
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════════════
-   ██████╗  █████╗ ████████╗ █████╗     ███████╗████████╗ ██████╗ ██████╗ ███████╗
-   ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗    ██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██╔════╝
-   ██║  ██║███████║   ██║   ███████║    ███████╗   ██║   ██║   ██║██████╔╝█████╗
-   ██║  ██║██╔══██║   ██║   ██╔══██║    ╚════██║   ██║   ██║   ██║██╔══██╗██╔══╝
-   ██████╔╝██║  ██║   ██║   ██║  ██║    ███████║   ██║   ╚██████╔╝██║  ██║███████╗
-   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝   ╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝
-
-   TO ADD A NEW QUEST: Copy any quest object below and paste it at the end
-   of the QUESTS array. Change the id and fill in the fields. That's it.
-   ═══════════════════════════════════════════════════════════════════════ */
-
 const QUESTS = [
-  /* ─── WARM-UP QUESTS ─────────────────────────────────────────────── */
+
+  /* ══════════════════════════════════════════════════════════════
+     EASY QUESTS
+  ══════════════════════════════════════════════════════════════ */
   {
     id: 1,
     title: "Is It Raining?",
-    description: "Go to a random stranger and ask them if its raining",
-    difficulty: "warmup",
+    description: "Walk up to a random stranger and ask them if it's raining outside. Completely seriously. No explanation.",
+    difficulty: "easy",
     environment: "outdoor",
     category: "Social",
-    timeEstimate: "Throughout the day",
+    timeEstimate: "5 minutes",
     twist: null
   },
   {
     id: 2,
-    title: "Digital Detox Hour",
-    description: "Put your phone in another room and spend 60 minutes doing something completely offline. Read, draw, cook, stretch. Anything without a screen.",
-    difficulty: "warmup",
-    environment: "indoor",
-    category: "Productivity",
-    timeEstimate: "1 hour",
-    twist: null
+    title: "Out of Context",
+    description: "Approach a random person, say something completely random with zero context, then walk away like nothing happened.",
+    difficulty: "easy",
+    environment: "outdoor",
+    category: "Social",
+    timeEstimate: "5 minutes",
+    twist: "Twist: Do it to 3 different people."
   },
   {
     id: 3,
-    title: "3 Photo Challenge",
-    description: "Take pictures of 3 random objects and make them look artistic.",
-    difficulty: "Creativity",
-    environment: "mixed",
-    category: "Social",
-    timeEstimate: "Throughout the day",
-    twist: "Twist: Don't limit yourself to 3 pictures."
+    title: "Fake Product Design",
+    description: "Design a completely useless product on paper. Name it, draw it, and write a fake advertisement for it. The more absurd the better.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "30 minutes",
+    twist: null
   },
   {
     id: 4,
-    title: "Digital Reset",
-    description: "Delete 5 useless screenshots, files, or apps you do not need anymore.",
-    difficulty: "warmup",
-    environment: "indoor",
-    category: "Productivity",
+    title: "3 Photo Challenge",
+    description: "Go find 3 random objects around you and photograph them in the most dramatic, artistic way possible. Lighting, angles, shadows.",
+    difficulty: "easy",
+    environment: "mixed",
+    category: "Creativity",
     timeEstimate: "20 minutes",
-    twist: "Twist: Clean the entire room."
+    twist: "Twist: Post your favorites with zero explanation."
   },
   {
     id: 5,
-    title: "Out of Context",
-    description: "Go upto a random person and say something completely random with no context and walk away",
-    difficulty: "warmup",
-    environment: "outdoor",
-    category: "Social",
-    timeEstimate: "30 minutes",
+    title: "Digital Purge",
+    description: "Open your phone gallery and delete at least 50 photos you will never look at again. Screenshots, blurry pics, accidental selfies. They must go.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Productivity",
+    timeEstimate: "15 minutes",
     twist: null
   },
   {
     id: 6,
-    title: "Stair Challenge",
-    description: "Keep going up and down the stairs for 30 minutes.",
-    difficulty: "warmup",
+    title: "Floor Nap Challenge",
+    description: "Lie flat on the floor in the middle of your room for 15 minutes. No phone, no pillow. Just you and the ground. Think about life.",
+    difficulty: "easy",
     environment: "indoor",
-    category: "Physical",
-    timeEstimate: "30 minutes",
-    twist: null
+    category: "Chill",
+    timeEstimate: "15 minutes",
+    twist: "Twist: If someone walks in, act like nothing is wrong."
   },
   {
     id: 7,
-    title: "Stretch & Breathe",
-    description: "Do 10 minutes of intentional stretching followed by 5 minutes of deep breathing. No YouTube, no music. Just you and your body.",
-    difficulty: "warmup",
+    title: "Terrible Movie Review",
+    description: "Pick a movie you've never seen, write a full review for it based only on the title and poster.",
+    difficulty: "easy",
     environment: "indoor",
-    category: "Physical",
-    timeEstimate: "15 minutes",
-    twist: null
+    category: "Creativity",
+    timeEstimate: "20 minutes",
+    twist: "Bonus: After writing the review watch the movie to see if you were wrong."
   },
   {
     id: 8,
-    title: "Learn One Thing",
-    description: "Spend 30 minutes learning something you've always been curious about. Wikipedia rabbit holes count. You must be able to explain it to someone afterwards.",
-    difficulty: "warmup",
+    title: "Strange Texts",
+    description: "Text random emojis to 5 random people from your following. Only pick people you have never texted.",
+    difficulty: "easy",
     environment: "indoor",
-    category: "Creativity",
-    timeEstimate: "30 minutes",
-    twist: "Twist: Actually explain it to someone before the day is over."
+    category: "Social",
+    timeEstimate: "5 minute",
+    twist: null
   },
-
-  /* ─── ADVENTURE QUESTS ───────────────────────────────────────────── */
   {
     id: 9,
-    title: "Fake Product Design",
-    description: "Design a completely useless product. Can be anything.",
-    difficulty: "Creativity",
-    environment: "outdoor",
+    title: "Conspiracy Board",
+    description: "Pick something totally normal (traffic lights, pigeons, the letter Q) and write a fake conspiracy theory about it. Fill at least one page.",
+    difficulty: "easy",
+    environment: "indoor",
     category: "Creativity",
-    timeEstimate: "1 hour",
+    timeEstimate: "25 minutes",
     twist: null
   },
   {
     id: 10,
-    title: "Selfie With a Stranger",
-    description: "Take a selfie with a random stranger you have never met.",
-    difficulty: "adventure",
-    environment: "outdoor",
-    category: "Physical",
-    timeEstimate: "15 minutes",
+    title: "Mystery Meal",
+    description: "Open your fridge, pick 4 random ingredients, and Google a recipe that uses all of them. Make it. Eat it. Accept your fate.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Food",
+    timeEstimate: "45 minutes",
     twist: null
   },
   {
     id: 11,
-    title: "Cook Something From Scratch",
-    description: "Make a full meal entirely from scratch. No ready meals, no jar sauces. Find a recipe for something you've never made, get the ingredients, and cook it.",
-    difficulty: "adventure",
+    title: "Speed Sketch",
+    description: "Set a 60-second timer and draw someone in the room, or from memory. Repeat 5 times. Your drawings will be horrible. That's the point.",
+    difficulty: "easy",
     environment: "indoor",
     category: "Creativity",
-    timeEstimate: "1-2 hours",
-    twist: "Twist: Cook for someone else, not just yourself."
+    timeEstimate: "10 minutes",
+    twist: null
   },
   {
     id: 12,
-    title: "Street Story Snapshot",
-    description: "Go to a random spot, take a picture and post it on your story with a made up story about that spot.",
-    difficulty: "adventure",
+    title: "Random Wikipedia Wormhole",
+    description: "Open Wikipedia, click 'Random article', then keep clicking links until you end up somewhere completely unrelated. See how far from where you started you can get in 10 clicks.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Exploration",
+    timeEstimate: "10 minutes",
+    twist: "Twist: Tell someone the most interesting thing you learned."
+  },
+  {
+    id: 13,
+    title: "Talk to the Mirror",
+    description: "Stand in front of a mirror and deliver a full 2-minute speech on any topic of your choice. Confident eye contact required. No laughing.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Social",
+    timeEstimate: "10 minutes",
+    twist: null
+  },
+  {
+    id: 14,
+    title: "Bad TV show",
+    description: "Watch an entire season of a TV show you don't want to watch.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "30 minutes",
+    twist: "Twist: Actually do something productive while listening to it."
+  },
+  {
+    id: 15,
+    title: "Rearrange One Thing",
+    description: "Rearrange the furniture in one room. Move at least 3 things to completely different spots. See if it slaps.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Productivity",
+    timeEstimate: "30 minutes",
+    twist: null
+  },
+  {
+    id: 16,
+    title: "The Dramatic Narrator",
+    description: "For the next 30 minutes, narrate everything you do in your head like you're the main character of an epic movie. Every action is legendary.",
+    difficulty: "easy",
+    environment: "mixed",
+    category: "Chill",
+    timeEstimate: "30 minutes",
+    twist: null
+  },
+  {
+    id: 17,
+    title: "Dead App Graveyard",
+    description: "Go through your phone and find apps you haven't opened in over 3 months. Delete all of them.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Productivity",
+    timeEstimate: "15 minutes",
+    twist: null
+  },
+  {
+    id: 18,
+    title: "Paper Airplane Derby",
+    description: "Make 5 different paper airplane designs and test each one. Give them names, rank them, and crown a champion.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "20 minutes",
+    twist: null
+  },
+  {
+    id: 19,
+    title: "Elevator Pitch Yourself",
+    description: "Write a 30-second pitch selling yourself as if you were a product. Include features, benefits, and a slogan.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "15 minutes",
+    twist: "Twist: Deliver it to someone without telling them what you're doing."
+  },
+  {
+    id: 20,
+    title: "The Blind Taste Test",
+    description: "Grab 5 things from your kitchen, blindfold yourself, and taste them one by one. See how many you can identify correctly.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Food",
+    timeEstimate: "15 minutes",
+    twist: null
+  },
+  {
+    id: 21,
+    title: "Two Truths, One Lie",
+    description: "Write 20 two-truths-and-a-lie combos about yourself. Make the truths weird and the lies believable.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Social",
+    timeEstimate: "20 minutes",
+    twist: "Twist: Send one to someone and see if they can guess."
+  },
+  {
+    id: 22,
+    title: "Cold Water Challenge",
+    description: "End your next shower with 60 seconds of cold water. Full blast. No easing in. You'll feel like a new human after.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Physical",
+    timeEstimate: "5 minutes",
+    twist: null
+  },
+  {
+    id: 23,
+    title: "Name Every Object",
+    description: "Pick a room. Name every single object in it with a fake villain name. The lamp is now Lord Duskwick. The chair is Commander Stool. Take it seriously.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "15 minutes",
+    twist: null
+  },
+  {
+    id: 24,
+    title: "Street Interview (Sort Of)",
+    description: "Ask 3 strangers outside one random question.",
+    difficulty: "easy",
+    environment: "outdoor",
+    category: "Social",
+    timeEstimate: "20 minutes",
+    twist: null
+  },
+  {
+    id: 25,
+    title: "Fake Wikipedia Page",
+    description: "Write a Wikipedia-style article about yourself. Include your 'early life', 'career', 'controversies', and 'legacy'. Make it sound completely serious.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "30 minutes",
+    twist: null
+  },
+  {
+    id: 26,
+    title: "100 Squats. That's It.",
+    description: "Do 100 squats. Split it however you want. Do 10 every time an ad plays. Do 25 between tasks. Just hit 100 before midnight.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Physical",
+    timeEstimate: "Throughout the day",
+    twist: null
+  },
+  {
+    id: 27,
+    title: "Overheard Conversation Game",
+    description: "Sit somewhere public, listen to a fragment of a stranger's conversation, and write a short story about what you think is going on in their life.",
+    difficulty: "easy",
     environment: "outdoor",
     category: "Creativity",
     timeEstimate: "30 minutes",
     twist: null
   },
   {
-    id: 13,
-    title: "Urban Sketcher",
-    description: "Go somewhere public, a park, café, or street, and spend 45 minutes sketching what you see. You don't need to be good. Just observe and draw.",
-    difficulty: "adventure",
-    environment: "outdoor",
-    category: "Creativity",
+    id: 28,
+    title: "Build a Fort",
+    description: "Build a blanket/pillow fort in your living room. Then spend at least 30 minutes inside it doing whatever you want.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Chill",
     timeEstimate: "1 hour",
-    twist: "Bonus: Post it online."
-  },
-  {
-    id: 14,
-    title: "Object Upgrade Concept",
-    description: "Pick any object nearby and redesign it in your mind into a futuristic version and describe its new abilities.",
-    difficulty: "adventure",
-    environment: "mixed",
-    category: "Creativity",
-    timeEstimate: "Full day",
     twist: null
   },
   {
-    id: 15,
+    id: 29,
+    title: "Rate the Menus",
+    description: "Look up the menu of 5 random restaurants online and rank every single dish. Be brutal. Be fair. Be specific.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Food",
+    timeEstimate: "25 minutes",
+    twist: null
+  },
+  {
+    id: 30,
+    title: "Evil Genius Doodle",
+    description: "Draw your dream villain lair from a bird's eye view. Include escape routes, trap rooms, a lava moat. Whatever a proper villain needs.",
+    difficulty: "easy",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "30 minutes",
+    twist: null
+  },
+
+  /* ══════════════════════════════════════════════════════════════
+     MEDIUM QUESTS
+  ══════════════════════════════════════════════════════════════ */
+  {
+    id: 31,
+    title: "Stair Marathon",
+    description: "Go up and down a flight of stairs without stopping until you can't anymore. Count your floors. Record your score. Beat it next time.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Physical",
+    timeEstimate: "30 minutes",
+    twist: null
+  },
+  {
+    id: 32,
+    title: "Selfie With a Stranger",
+    description: "Walk up to someone you've never met and ask for a selfie together. No explanation needed. Just ask.",
+    difficulty: "medium",
+    environment: "outdoor",
+    category: "Social",
+    timeEstimate: "20 minutes",
+    twist: "Twist: Get 3 different strangers in the same day."
+  },
+  {
+    id: 33,
+    title: "Cook Something Weird",
+    description: "Find a dish from a country you've never cooked from before. Source the ingredients and make it from scratch. Eat the whole thing.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Food",
+    timeEstimate: "2 hours",
+    twist: "Twist: Make enough to feed someone else too and watch their reaction."
+  },
+  {
+    id: 34,
+    title: "Street Story Snapshot",
+    description: "Go to a random spot you'd never normally pay attention to. Take a photo. Then post it to your story with a completely made-up dramatic backstory about the location.",
+    difficulty: "medium",
+    environment: "outdoor",
+    category: "Creativity",
+    timeEstimate: "30 minutes",
+    twist: null
+  },
+  {
+    id: 35,
+    title: "Urban Sketcher",
+    description: "Find a public spot. A market, a bus stop, a park, and spend 45 minutes sketching what you see. You don't need to be good. You just need to actually observe.",
+    difficulty: "medium",
+    environment: "outdoor",
+    category: "Creativity",
+    timeEstimate: "1 hour",
+    twist: "Twist: Post it online without editing or apologizing for it."
+  },
+  {
+    id: 36,
     title: "Random Landmark Hunt",
-    description: "Pick a direction and walk until you find a landmark you have never properly noticed, then take a photo of it like a tourist.",
-    difficulty: "adventure",
+    description: "Pick a direction and walk until you find something — a building, a sign, a sculpture — you've never properly noticed. Photograph it like a tourist.",
+    difficulty: "medium",
     environment: "outdoor",
     category: "Exploration",
     timeEstimate: "2 hours",
     twist: null
   },
   {
-    id: 16,
-    title: "100 Reps Challenge",
-    description: "Pick one bodyweight exercise (push-ups, squats, sit-ups) and do 100 reps total today. Split them however you want. 10 sets of 10, 4 sets of 25, anything.",
-    difficulty: "adventure",
+    id: 37,
+    title: "Object Upgrade Concept",
+    description: "Pick any object nearby. Design a futuristic 2050 version of it. Give it 3 new abilities, a new name, and sketch or describe what it looks like.",
+    difficulty: "medium",
     environment: "indoor",
-    category: "Physical",
-    timeEstimate: "Throughout the day",
+    category: "Creativity",
+    timeEstimate: "45 minutes",
     twist: null
   },
   {
-    id: 17,
-    title: "Item Removal.",
-    description: "Get rid of something that is useless but you've been too lazy to get rid of.",
-    difficulty: "adventure",
+    id: 38,
+    title: "100 Rep Gauntlet",
+    description: "Pick any bodyweight exercise. Do 100 reps total today. Scatter them across the day however you want. Don't cheat yourself.",
+    difficulty: "medium",
     environment: "indoor",
-    category: "Productivity",
-    timeEstimate: "1 hour",
-    twist: "Twist: Tell someone what you worked on by the end of the day. Accountability helps."
+    category: "Physical",
+    timeEstimate: "Throughout the day",
+    twist: "Twist: Do 3 different exercises. 100 each."
   },
   {
-    id: 18,
+    id: 39,
     title: "The Sunrise Mission",
-    description: "Wake up before sunrise, go outside, and watch the sun come up. Bring nothing to do. Just be there, watch, and think.",
-    difficulty: "adventure",
+    description: "Set your alarm for before sunrise. Go outside and watch it come up. No phone, no earphones. Just you and the sky.",
+    difficulty: "medium",
     environment: "outdoor",
     category: "Exploration",
     timeEstimate: "1 hour",
-    twist: "Bonus: Bring a flask of something warm. You've earned it."
+    twist: "Twist: Bring something warm to drink. You earned it."
   },
-
-  /* ─── LEGEND QUESTS ──────────────────────────────────────────────── */
   {
-    id: 19,
-    title: "Talk to a Stranger",
-    description: "Start a real, full conversation with a complete stranger - not just pleasantries. Ask them something genuine about their life. Really listen.",
-    difficulty: "legend",
+    id: 40,
+    title: "Fully Offline Day",
+    description: "No internet, no streaming, no social media for an entire day. Do anything else. Anything. Just not that.",
+    difficulty: "medium",
+    environment: "mixed",
+    category: "Chill",
+    timeEstimate: "Full day",
+    twist: null
+  },
+  {
+    id: 41,
+    title: "Bus to Nowhere",
+    description: "Pick a bus you've never taken. Get on. Ride it for 4 stops. Get off. Explore wherever you end up for at least 30 minutes before coming back.",
+    difficulty: "medium",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "2 hours",
+    twist: null
+  },
+  {
+    id: 42,
+    title: "Make a Short Film",
+    description: "Shoot a 1-3 minute video about literally anything. A mini documentary, a fake ad, a short story. Edit it even slightly before posting.",
+    difficulty: "medium",
+    environment: "mixed",
+    category: "Creativity",
+    timeEstimate: "2-3 hours",
+    twist: "Twist: You must appear in it."
+  },
+  {
+    id: 43,
+    title: "Teach a Skill in 5 Minutes",
+    description: "Think of something you actually know how to do well. Make a 5-minute video or voice note teaching it like you're explaining to a total beginner.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Social",
+    timeEstimate: "1 hour",
+    twist: null
+  },
+  {
+    id: 44,
+    title: "Rooftop (or High Spot) Recon",
+    description: "Find the highest accessible point near you — a rooftop, a hill, a tall building's top floor — and spend 20 minutes just looking at everything from above.",
+    difficulty: "medium",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "1 hour",
+    twist: null
+  },
+  {
+    id: 45,
+    title: "Cold Shower Every Day This Week",
+    description: "Commit to cold showers for 7 days straight. Not lukewarm. Cold. Start with 30 seconds if you have to and build up.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Physical",
+    timeEstimate: "1 week",
+    twist: null
+  },
+  {
+    id: 46,
+    title: "Blind Restaurant Order",
+    description: "Go to any restaurant. Hand the menu back and tell the waiter to bring you whatever they think is best. No restrictions, no guidance. Eat what arrives.",
+    difficulty: "medium",
+    environment: "outdoor",
+    category: "Food",
+    timeEstimate: "1 hour",
+    twist: null
+  },
+  {
+    id: 47,
+    title: "Speed Run Your Room",
+    description: "Set a 20-minute timer. Clean your room as thoroughly as you can before it runs out. Full mode — bed made, floor clear, desk organized.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Productivity",
+    timeEstimate: "20 minutes",
+    twist: "Twist: Play aggressive music. It changes everything."
+  },
+  {
+    id: 48,
+    title: "Write and Send the Letter",
+    description: "Write a physical letter to someone you haven't spoken to in a while. Don't be weird, just be real. Then actually send it.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Social",
+    timeEstimate: "1 hour",
+    twist: null
+  },
+  {
+    id: 49,
+    title: "Extreme Doomsday Prep",
+    description: "Write a serious, detailed survival plan for a scenario of your choice: zombie outbreak, power grid failure, sudden time travel. Resources, allies, day-by-day plan.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "1 hour",
+    twist: null
+  },
+  {
+    id: 50,
+    title: "The Reverse Commute",
+    description: "Walk or travel a route you know well but in the completely opposite direction from usual. See what you notice that you've been walking past your whole life.",
+    difficulty: "medium",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "1 hour",
+    twist: null
+  },
+  {
+    id: 51,
+    title: "Ranked: Every Food You've Ever Hated",
+    description: "Write a ranked list of every food you dislike, with a short review for each. Be as dramatic and specific as possible. This is your manifesto.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Food",
+    timeEstimate: "30 minutes",
+    twist: "Twist: Pick one from the list and try it again. Maybe you've changed."
+  },
+  {
+    id: 52,
+    title: "One-Man Escape Room",
+    description: "Hide something important (keys, a snack, a book) from yourself somewhere in your house and write cryptic clues to find it. Then actually forget about it for an hour before starting.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Chill",
+    timeEstimate: "1 hour",
+    twist: null
+  },
+  {
+    id: 53,
+    title: "30-Minute Hustle",
+    description: "Pick one thing on your to-do list that you've been avoiding for over a week. Work on it — and only it — for 30 minutes straight. No distractions. Just handle it.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Productivity",
+    timeEstimate: "30 minutes",
+    twist: null
+  },
+  {
+    id: 54,
+    title: "Night Walk",
+    description: "Go for a solo walk after 9pm. No destination, no music. Just walk for 30 minutes and actually pay attention to what the world sounds and looks like at night.",
+    difficulty: "medium",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "45 minutes",
+    twist: null
+  },
+  {
+    id: 55,
+    title: "Speed Jigsaw",
+    description: "Find a jigsaw puzzle (or download a digital one). Complete it as fast as possible. Time yourself. This is competitive now.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Chill",
+    timeEstimate: "1-2 hours",
+    twist: null
+  },
+  {
+    id: 56,
+    title: "Fake News Report",
+    description: "Write a full fake breaking news article about something absurd happening in your city. Include quotes, expert opinions, and a dramatic headline.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "45 minutes",
+    twist: null
+  },
+  {
+    id: 57,
+    title: "Take a Photo Every Hour",
+    description: "Set hourly alarms. Every time one goes off, take a photo of exactly where you are and what's in front of you. Make a collage at the end.",
+    difficulty: "medium",
+    environment: "mixed",
+    category: "Creativity",
+    timeEstimate: "Full day",
+    twist: null
+  },
+  {
+    id: 58,
+    title: "Speed Eat Challenge",
+    description: "Make a proper meal. Eat it as slowly as humanly possible. Minimum 30 minutes for the meal. Actually taste every bite. Don't look at your phone.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Food",
+    timeEstimate: "45 minutes",
+    twist: null
+  },
+  {
+    id: 59,
+    title: "Design Your Dream Apartment",
+    description: "Open a floor plan tool (or just paper) and design your ideal apartment. Every room, every feature. Budget is fictional. Go completely overboard.",
+    difficulty: "medium",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "1 hour",
+    twist: null
+  },
+  {
+    id: 60,
+    title: "Café Stranger Chat",
+    description: "Go to a café. Sit somewhere you can see people. Strike up a conversation with whoever sits near you. Even a 5-minute chat counts.",
+    difficulty: "medium",
     environment: "outdoor",
     category: "Social",
-    timeEstimate: "20–60 minutes",
-    twist: "Twist: The stranger must be at least 20 years older or younger than you."
+    timeEstimate: "1 hour",
+    twist: null
+  },
+
+  /* ══════════════════════════════════════════════════════════════
+     HARD QUESTS
+  ══════════════════════════════════════════════════════════════ */
+  {
+    id: 61,
+    title: "Talk to a Stranger (For Real)",
+    description: "Have an actual, real conversation with a complete stranger — not just pleasantries. Ask something genuine. Listen carefully. Don't check your phone once.",
+    difficulty: "hard",
+    environment: "outdoor",
+    category: "Social",
+    timeEstimate: "20-60 minutes",
+    twist: "Twist: The stranger must be at least 20 years older than you."
   },
   {
-    id: 20,
-    title: "The Overnight Fast",
-    description: "Don't eat for 18 hours. Drink water, tea, coffee (black). Use the time you'd spend eating to do something meaningful instead. Break the fast mindfully.",
-    difficulty: "legend",
+    id: 62,
+    title: "Strange Lunch",
+    description: "Walk up to a stranger and invite them to lunch. Pay for it. No strings. Just see what happens.",
+    difficulty: "hard",
+    environment: "outdoor",
+    category: "Social",
+    timeEstimate: "2 hours",
+    twist: "Twist: Try to fill an entire table with strangers."
+  },
+  {
+    id: 63,
+    title: "Create and Actually Ship It",
+    description: "Make something creative — a video, an essay, a drawing, a song — and post it publicly. No draft forever. Just make it and upload it.",
+    difficulty: "hard",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "3-5 hours",
+    twist: "Twist: You get 30 minutes of editing. No more. Ship it ugly if you have to."
+  },
+  {
+    id: 64,
+    title: "The Lost Weekend Explorer",
+    description: "Pick a town or city within 2 hours of you that you've never visited. Go there alone. No Google Maps once you arrive. Just walk and figure it out.",
+    difficulty: "hard",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "Full day",
+    twist: "Twist: Eat somewhere where you don't recognize a single dish on the menu."
+  },
+  {
+    id: 65,
+    title: "Night Run",
+    description: "Go for a run after 9pm. No music, no podcast. Pick a route that's at least a little unfamiliar. Run for a minimum of 30 minutes.",
+    difficulty: "hard",
+    environment: "outdoor",
+    category: "Physical",
+    timeEstimate: "45 minutes",
+    twist: "Twist: Run somewhere you've never been before."
+  },
+  {
+    id: 66,
+    title: "Volunteer Day",
+    description: "Show up somewhere and give 3+ hours of your time for free. Food banks, community cleanup, local events. Don't overthink it — just go.",
+    difficulty: "hard",
+    environment: "outdoor",
+    category: "Social",
+    timeEstimate: "Half a day",
+    twist: "Twist: Go alone so you're forced to meet people."
+  },
+  {
+    id: 67,
+    title: "5AM for 3 Days",
+    description: "Wake up at 5am three days in a row. Use the first hour for yourself — not your phone, not social media. Do literally anything else.",
+    difficulty: "hard",
+    environment: "mixed",
+    category: "Productivity",
+    timeEstimate: "3 days",
+    twist: "Twist: Tell no one. Let results speak."
+  },
+  {
+    id: 68,
+    title: "Social Media Blackout Week",
+    description: "Delete all social media apps for 7 days. Not muted — gone. Use the time you reclaim for anything else. Actually track what you do instead.",
+    difficulty: "hard",
+    environment: "mixed",
+    category: "Productivity",
+    timeEstimate: "7 days",
+    twist: null
+  },
+  {
+    id: 69,
+    title: "The 18-Hour Fast",
+    description: "Don't eat for 18 hours. Water, black coffee, and tea are allowed. When you're hungry, do something. Use the food-free time to actually notice how much time eating takes.",
+    difficulty: "hard",
     environment: "mixed",
     category: "Physical",
     timeEstimate: "18 hours",
     twist: null
   },
   {
-    id: 21,
-    title: "Volunteer Your Time",
-    description: "Find a local volunteer opportunity and give at least 3 hours of your time this week. Food banks, community gardens, charity shops - anywhere you're needed.",
-    difficulty: "legend",
+    id: 70,
+    title: "Open Mic. Go.",
+    description: "Find an open mic event near you — comedy, poetry, music, spoken word. Sign up. Perform anything. You have one week to prepare.",
+    difficulty: "hard",
     environment: "outdoor",
     category: "Social",
-    timeEstimate: "Half a day",
-    twist: "Twist: Go alone so you're forced to meet new people."
+    timeEstimate: "1 week prep",
+    twist: null
   },
   {
-    id: 22,
-    title: "Create & Publish Something",
-    description: "Make something creative - a short video, a piece of writing, a drawing, a song, anything - and put it out into the world. Post it publicly. Ship it.",
-    difficulty: "legend",
+    id: 71,
+    title: "Cook a 3-Course Meal From Scratch",
+    description: "Plan and cook a full starter, main, and dessert for at least one other person. No shortcuts, no ready-made anything. You're a restaurant tonight.",
+    difficulty: "hard",
+    environment: "indoor",
+    category: "Food",
+    timeEstimate: "3-4 hours",
+    twist: "Twist: Don't tell them what you're making until it arrives."
+  },
+  {
+    id: 72,
+    title: "Build Something Physical",
+    description: "Build something with your hands that didn't exist before — furniture from scratch, a birdhouse, a shelf, a lamp. If you can't buy wood, use cardboard. But it must be real.",
+    difficulty: "hard",
     environment: "indoor",
     category: "Creativity",
-    timeEstimate: "3–5 hours",
-    twist: "Twist: Don't edit it for more than 30 minutes. Done is better than perfect."
+    timeEstimate: "Half a day",
+    twist: null
   },
   {
-    id: 23,
-    title: "The 5AM Club",
-    description: "For 3 days in a row, wake up at 5am. Use the first hour for yourself - exercise, reading, journaling, or planning. No phone for the first 30 minutes.",
-    difficulty: "legend",
+    id: 73,
+    title: "Photo Essay: Your Neighbourhood",
+    description: "Spend 3 hours walking your area with a camera and photograph it like a professional documentary photographer. 30 photos minimum. Pick your 10 best. Make a gallery post.",
+    difficulty: "hard",
+    environment: "outdoor",
+    category: "Creativity",
+    timeEstimate: "3-4 hours",
+    twist: null
+  },
+  {
+    id: 74,
+    title: "Teach Someone Something Real",
+    description: "Pick a skill you actually have. Find someone who doesn't. Spend 2 hours genuinely teaching them. Not just explaining — actually teaching until they get it.",
+    difficulty: "hard",
+    environment: "mixed",
+    category: "Social",
+    timeEstimate: "2-3 hours",
+    twist: null
+  },
+  {
+    id: 75,
+    title: "The Comfort Zone Bracket",
+    description: "List 8 things that make you mildly uncomfortable. Do all 8 of them today. They don't have to be dangerous — just things you'd normally avoid.",
+    difficulty: "hard",
+    environment: "mixed",
+    category: "Social",
+    timeEstimate: "Full day",
+    twist: null
+  },
+  {
+    id: 76,
+    title: "Cold Turkey: One Bad Habit",
+    description: "Pick one habit that's been costing you. Cut it for 7 days completely. Track every day with a single mark in a notebook. Seven marks = you win.",
+    difficulty: "hard",
     environment: "mixed",
     category: "Productivity",
-    timeEstimate: "3 days",
-    twist: "Twist: Tell no one until it's done. Let the results speak."
+    timeEstimate: "7 days",
+    twist: null
   },
   {
-    id: 24,
-    title: "The Lost Weekend Explorer",
-    description: "Pick a town or city within 2 hours of you that you've never visited. Go there for the day with no plan - no Google Maps, no itinerary. Just explore and figure it out.",
-    difficulty: "legend",
+    id: 77,
+    title: "Overnight Hike",
+    description: "Plan and execute an overnight hike or camping trip. Just one night. Pack your own gear, pick a route, go. Wake up somewhere that isn't your bedroom.",
+    difficulty: "hard",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "2 days",
+    twist: "Twist: No music or podcasts the entire time. Just nature sounds and your thoughts."
+  },
+  {
+    id: 78,
+    title: "Write the Thing You've Been Avoiding",
+    description: "You know what it is. The message you haven't sent, the essay you haven't started, the apology you haven't written. Do it. Send it. Done.",
+    difficulty: "hard",
+    environment: "indoor",
+    category: "Productivity",
+    timeEstimate: "1-2 hours",
+    twist: null
+  },
+  {
+    id: 79,
+    title: "Sparring Match",
+    description: "Find a boxing gym, martial arts class, or combat sports club with a drop-in session. Go once. Actually spar or drill with someone. Come back changed.",
+    difficulty: "hard",
+    environment: "outdoor",
+    category: "Physical",
+    timeEstimate: "2 hours",
+    twist: null
+  },
+  {
+    id: 80,
+    title: "The Broke Gourmet Challenge",
+    description: "Cook the most impressive meal possible using only items that cost under $5 total. Research, plan, execute. Quality through creativity, not budget.",
+    difficulty: "hard",
+    environment: "indoor",
+    category: "Food",
+    timeEstimate: "2 hours",
+    twist: "Twist: Photograph it like it's a $60 restaurant dish."
+  },
+  {
+    id: 81,
+    title: "Live Without GPS for a Day",
+    description: "Go out and navigate entirely without maps. Ask people for directions. Get lost. Find your way back. Old school.",
+    difficulty: "hard",
     environment: "outdoor",
     category: "Exploration",
     timeEstimate: "Full day",
-    twist: "Bonus: Eat somewhere with no English on the menu."
+    twist: null
   },
   {
-    id: 25,
-    title: "Learn & Teach",
-    description: "Spend one week learning a new skill - even just the basics. Then teach what you've learned to at least one other person by the end of the week.",
-    difficulty: "legend",
-    environment: "mixed",
+    id: 82,
+    title: "One-Day Business Plan",
+    description: "Spend the day designing a real business idea. Market, product, competitors, pricing, name, logo, pitch. If you can't explain it in 2 minutes at the end, start over.",
+    difficulty: "hard",
+    environment: "indoor",
     category: "Creativity",
-    timeEstimate: "1 week",
-    twist: "Twist: Document your progress daily in writing, photos, or video."
+    timeEstimate: "Full day",
+    twist: "Twist: Send the pitch to one person who might actually care about it."
   },
   {
-    id: 26,
-    title: "30-Day No-Social-Media",
-    description: "Delete all social media apps from your phone for 30 days. Use the time you reclaim for literally anything else. Track what you do with the freed time.",
-    difficulty: "legend",
-    environment: "mixed",
+    id: 83,
+    title: "The Minimalism Cull",
+    description: "Get rid of 50 physical objects from your life today. Trash, donate, sell — doesn't matter. They just have to leave. Count them.",
+    difficulty: "hard",
+    environment: "indoor",
     category: "Productivity",
-    timeEstimate: "30 days",
-    twist: "Twist: Tell someone on social media you're leaving, then log off."
+    timeEstimate: "3-4 hours",
+    twist: null
   },
   {
-    id: 27,
-    title: "Night Run",
-    description: "Go for a run at night - after 9pm. Pick a route that's safe but unfamiliar. No music, just the sound of the city or silence. Run for at least 30 minutes.",
-    difficulty: "legend",
+    id: 84,
+    title: "Memory Palace Construction",
+    description: "Build a real memory palace. Pick a location you know well. Assign 20 random facts, numbers, or words to specific spots in it. Then recite them perfectly tomorrow.",
+    difficulty: "hard",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "2 hours",
+    twist: null
+  },
+  {
+    id: 85,
+    title: "Full Day Solo Date",
+    description: "Plan and execute a full day out by yourself — breakfast, activity, lunch, another activity, dinner. No friends, no family, no phone scrolling. Just you being deliberately alone.",
+    difficulty: "hard",
     environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "Full day",
+    twist: null
+  },
+  {
+    id: 86,
+    title: "Fitness Test: What Can You Actually Do?",
+    description: "Find a proper fitness test online (push-up test, VO2 max estimate, etc.) and complete it in full. Record your scores. You now have a baseline.",
+    difficulty: "hard",
+    environment: "indoor",
     category: "Physical",
-    timeEstimate: "45 minutes",
-    twist: "Twist: Run somewhere you've never been in daylight. Navigate by feel."
+    timeEstimate: "1 hour",
+    twist: "Twist: Retest yourself in 30 days."
+  },
+  {
+    id: 87,
+    title: "Stranger's Favourite Place",
+    description: "Ask 3 strangers for their favourite hidden spot, restaurant, or place in the city that most people don't know about. Then actually go to one of them.",
+    difficulty: "hard",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "Half a day",
+    twist: null
+  },
+  {
+    id: 88,
+    title: "Script and Record a Podcast Episode",
+    description: "Pick a topic you know something about. Write a 10-minute script. Record it solo, edit it even slightly, and send it to at least one person as an audio file.",
+    difficulty: "hard",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "3-4 hours",
+    twist: null
+  },
+  {
+    id: 89,
+    title: "Spend the Day as a Tourist",
+    description: "Treat your own city like you've never been there. Look up the top tourist attractions. Go to them. Take photos. Be embarrassingly enthusiastic about it.",
+    difficulty: "hard",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "Full day",
+    twist: null
+  },
+  {
+    id: 90,
+    title: "Iron Chef: Fridge Raid",
+    description: "Don't go grocery shopping. Cook every meal for 2 full days using only what you already have in your kitchen. Get creative. Waste nothing.",
+    difficulty: "hard",
+    environment: "indoor",
+    category: "Food",
+    timeEstimate: "2 days",
+    twist: null
   }
 
-  /* ───────────────────────────────────────────────────────────────────
-     ADD NEW QUESTS HERE - just copy the block above and paste it.
-     Make sure to:
-       1. Give it a unique id (increment from the last one)
-       2. Set difficulty to: "warmup" | "adventure" | "legend"
-       3. Set environment to: "indoor" | "outdoor" | "mixed"
-       4. Set twist to null if there's no twist
-     ─────────────────────────────────────────────────────────────────── */
 ];
 
-/* ═══════════════════════════════════════════════════════════════
-   XP SYSTEM - how much XP each difficulty gives on accept
-   ═══════════════════════════════════════════════════════════════ */
-const XP_REWARDS = { warmup: 20, adventure: 50, legend: 100 };
-const XP_PER_LEVEL = 100; // XP needed to level up (scales linearly for now)
+const XP_REWARDS = { easy: 20, medium: 50, hard: 100 };
+const XP_PER_LEVEL = 100;
 
-/* ═══════════════════════════════════════════════════════════════
-   APP STATE
-   ═══════════════════════════════════════════════════════════════ */
 let state = {
   xp:          0,
   level:       1,
   completed:   0,
   streak:      0,
   lastDate:    null,
-  history:     [],   // max 10 items
+  history:     [],
   saved:       [],
-  activeDiffs: new Set(['warmup','adventure','legend']),
+  activeDiffs: new Set(['easy','medium','hard']),
   activeEnv:   'all',
-  activeCats:  new Set(),  // empty = all cats
+  activeCats:  new Set(),
   currentQuest: null,
   dailyQuest:   null,
   dailyDone:    false,
 };
 
-/* ═══════════════════════════════════════════════════════════════
-   INIT
-   ═══════════════════════════════════════════════════════════════ */
 (function init() {
   loadState();
   buildCategoryFilters();
@@ -1222,12 +1646,23 @@ let state = {
 
 function loadState() {
   try {
-    const saved = localStorage.getItem('sidequestly_state');
-    if (saved) Object.assign(state, JSON.parse(saved), {
-      activeDiffs: new Set(JSON.parse(saved).activeDiffsArr || ['warmup','adventure','legend']),
-      activeCats:  new Set(JSON.parse(saved).activeCatsArr  || []),
-    });
+    const saved = localStorage.getItem('sidequestly_state_v2');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      Object.assign(state, parsed, {
+        activeDiffs: new Set(parsed.activeDiffsArr || ['easy','medium','hard']),
+        activeCats:  new Set(parsed.activeCatsArr  || []),
+      });
+    }
   } catch(e) {}
+  // Sync button visual states
+  document.querySelectorAll('.diff-btn').forEach(btn => {
+    const d = btn.dataset.diff;
+    btn.className = 'diff-btn' + (state.activeDiffs.has(d) ? ` active-${d}` : '');
+  });
+  document.querySelectorAll('.env-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.env === state.activeEnv);
+  });
 }
 
 function saveState() {
@@ -1239,12 +1674,9 @@ function saveState() {
     activeCatsArr:  [...state.activeCats],
     currentQuest: null,
   };
-  localStorage.setItem('sidequestly_state', JSON.stringify(toSave));
+  localStorage.setItem('sidequestly_state_v2', JSON.stringify(toSave));
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CATEGORY FILTERS - auto-built from quest data
-   ═══════════════════════════════════════════════════════════════ */
 function buildCategoryFilters() {
   const cats = [...new Set(QUESTS.map(q => q.category))].sort();
   const grid = document.getElementById('cat-grid');
@@ -1254,12 +1686,8 @@ function buildCategoryFilters() {
   `).join('');
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   DAILY QUEST - seeded by date so it's the same all day
-   ═══════════════════════════════════════════════════════════════ */
 function setDailyQuest() {
   const today = new Date().toDateString();
-  // Seed random with date string hashcode
   let hash = 0;
   for (let c of today) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
   const idx = hash % QUESTS.length;
@@ -1268,9 +1696,6 @@ function setDailyQuest() {
   document.getElementById('daily-xp').textContent   = '+' + (XP_REWARDS[state.dailyQuest.difficulty] * 2) + ' XP';
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   FILTER LOGIC
-   ═══════════════════════════════════════════════════════════════ */
 function toggleDiff(btn) {
   const d = btn.dataset.diff;
   if (state.activeDiffs.has(d)) {
@@ -1303,9 +1728,6 @@ function toggleCat(btn) {
   saveState();
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   QUEST GENERATION
-   ═══════════════════════════════════════════════════════════════ */
 function getFilteredQuests(exclude = null) {
   return QUESTS.filter(q => {
     if (!state.activeDiffs.has(q.difficulty)) return false;
@@ -1336,15 +1758,13 @@ function rerollQuest() {
 function displayQuest(quest) {
   state.currentQuest = quest;
 
-  const card    = document.getElementById('quest-card');
-  const empty   = document.getElementById('empty-state');
+  const card  = document.getElementById('quest-card');
+  const empty = document.getElementById('empty-state');
 
-  // Glow colour based on difficulty
-  const glowMap = { warmup:'rgba(0,230,118,0.06)', adventure:'rgba(255,179,0,0.06)', legend:'rgba(255,71,87,0.06)' };
+  const glowMap = { easy:'rgba(0,230,118,0.06)', medium:'rgba(255,179,0,0.06)', hard:'rgba(255,71,87,0.06)' };
   card.style.setProperty('--card-glow', glowMap[quest.difficulty]);
 
-  // Rarity label
-  const rarityMap = { warmup:'TIER I', adventure:'TIER II', legend:'TIER III ★' };
+  const rarityMap = { easy:'TIER I', medium:'TIER II', hard:'TIER III ★' };
 
   document.getElementById('card-title').textContent = quest.title;
   document.getElementById('card-desc').textContent  = quest.description;
@@ -1354,7 +1774,6 @@ function displayQuest(quest) {
   document.getElementById('card-rarity').textContent = rarityMap[quest.difficulty];
   document.getElementById('card-xp').textContent    = '+' + XP_REWARDS[quest.difficulty];
 
-  // Badges
   const badges = document.getElementById('card-badges');
   badges.innerHTML = `
     <span class="badge badge-${quest.difficulty}">${diffLabel(quest.difficulty)}</span>
@@ -1362,7 +1781,6 @@ function displayQuest(quest) {
     <span class="badge badge-cat">${quest.category}</span>
   `;
 
-  // Twist
   const twistEl = document.getElementById('card-twist');
   if (quest.twist) {
     twistEl.innerHTML = `<strong>⚡ TWIST:</strong> ${quest.twist}`;
@@ -1373,21 +1791,17 @@ function displayQuest(quest) {
 
   empty.style.display = 'none';
   card.classList.remove('visible');
-  void card.offsetWidth; // force reflow to re-trigger animation
+  void card.offsetWidth;
   card.classList.add('visible');
 
-  document.getElementById('generate-hint').textContent = `Quest loaded - ${getFilteredQuests().length} quests available`;
+  document.getElementById('generate-hint').textContent = `Quest loaded — ${getFilteredQuests().length} quests available`;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   QUEST ACTIONS
-   ═══════════════════════════════════════════════════════════════ */
 function acceptQuest() {
   if (!state.currentQuest) return;
   const quest = state.currentQuest;
   const xpGain = XP_REWARDS[quest.difficulty];
 
-  // Daily quest bonus
   const isDaily = state.dailyQuest && quest.id === state.dailyQuest.id && !state.dailyDone;
   const totalXP = isDaily ? xpGain * 2 : xpGain;
   if (isDaily) { state.dailyDone = true; toast(`⭐ Daily Quest accepted! +${totalXP} XP (2x bonus!)`); }
@@ -1427,9 +1841,6 @@ function hideCard() {
   document.getElementById('empty-state').style.display = 'flex';
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   XP & LEVELLING
-   ═══════════════════════════════════════════════════════════════ */
 function addXP(amount) {
   state.xp += amount;
   const xpNeeded = state.level * XP_PER_LEVEL;
@@ -1456,17 +1867,12 @@ function levelUpFlash() {
   setTimeout(() => flash.classList.remove('show'), 400);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   STREAK
-   ═══════════════════════════════════════════════════════════════ */
 function updateStreak() {
   const today = new Date().toDateString();
   if (state.lastDate === today) return;
-
   const yesterday = new Date(Date.now() - 86400000).toDateString();
   if (state.lastDate === yesterday) { state.streak++; }
   else if (state.lastDate !== today) { state.streak = 1; }
-
   state.lastDate = today;
   updateStreakDisplay();
 }
@@ -1475,9 +1881,6 @@ function updateStreakDisplay() {
   document.getElementById('streak-num').textContent = state.streak;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   HISTORY
-   ═══════════════════════════════════════════════════════════════ */
 function addToHistory(quest, status) {
   state.history.unshift({ id: quest.id, title: quest.title, difficulty: quest.difficulty, status, time: Date.now() });
   if (state.history.length > 10) state.history.pop();
@@ -1500,9 +1903,6 @@ function renderHistory() {
   `).join('');
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SAVED QUESTS
-   ═══════════════════════════════════════════════════════════════ */
 function renderSaved() {
   const el = document.getElementById('saved-list');
   if (!state.saved.length) {
@@ -1520,9 +1920,6 @@ function renderSaved() {
   `).join('');
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   TABS
-   ═══════════════════════════════════════════════════════════════ */
 function switchTab(id, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -1530,11 +1927,8 @@ function switchTab(id, btn) {
   document.getElementById('tab-' + id).classList.add('active');
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   HELPERS
-   ═══════════════════════════════════════════════════════════════ */
 function diffLabel(d) {
-  return { warmup: 'Warm-up', adventure: 'Adventure', legend: 'Legend' }[d] || d;
+  return { easy: 'Easy', medium: 'Medium', hard: 'Hard' }[d] || d;
 }
 
 function toast(msg) {
