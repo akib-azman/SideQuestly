@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SideQuestly - Real-Life Side Quest Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN SYSTEM - Edit these variables to retheme the whole app
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --bg:          #07080c;
+  --surface:     #0e1018;
+  --surface2:    #161824;
+  --surface3:    #1e2130;
+  --border:      rgba(255,255,255,0.06);
+  --border2:     rgba(255,255,255,0.11);
+  --text:        #e8e9f2;
+  --text2:       #8e90a8;
+  --text3:       #44465a;
+  --cyan:        #00e5ff;
+  --cyan-soft:   rgba(0,229,255,0.1);
+  --cyan-glow:   rgba(0,229,255,0.25);
+  --amber:       #ffb300;
+  --amber-soft:  rgba(255,179,0,0.1);
+  --red:         #ff4757;
+  --red-soft:    rgba(255,71,87,0.1);
+  --green:       #00e676;
+  --green-soft:  rgba(0,230,118,0.1);
+  --purple:      #b388ff;
+  --purple-soft: rgba(179,136,255,0.1);
+  --radius:      10px;
+  --radius-lg:   16px;
+  --radius-xl:   22px;
+
+  /* Difficulty colours */
+  --warmup: #00e676;
+  --warmup-soft: rgba(0,230,118,0.1);
+  --adventure: #ffb300;
+  --adventure-soft: rgba(255,179,0,0.1);
+  --legend: #ff4757;
+  --legend-soft: rgba(255,71,87,0.1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SCANLINE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* ── GRID BG ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════════════════════════ */
+.app {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+}
+
+/* ── HEADER ── */
+header {
+  padding: 2rem 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.logo-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--cyan);
+  text-shadow: 0 0 20px var(--cyan-glow);
+  line-height: 1;
+}
+.logo-sub {
+  font-size: 0.7rem;
+  color: var(--text3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.header-stats {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+.hstat {
+  text-align: center;
+}
+.hstat-val {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--cyan);
+  line-height: 1;
+}
+.hstat-label {
+  font-size: 0.65rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* XP bar */
+.xp-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+.xp-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--text3);
+}
+.xp-bar-bg {
+  height: 4px;
+  background: var(--surface3);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), #00b8d4);
+  border-radius: 10px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 8px var(--cyan-glow);
+}
+
+/* ── MAIN GRID ── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem;
+}
+
+.panel-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-title::before {
+  content: '';
+  width: 3px; height: 12px;
+  background: var(--cyan);
+  border-radius: 2px;
+  box-shadow: 0 0 6px var(--cyan-glow);
+}
+
+/* Difficulty filters */
+.filter-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
+.filter-label { font-size: 0.7rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+
+.diff-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: left;
+  width: 100%;
+}
+.diff-btn:hover { border-color: var(--border2); color: var(--text); }
+.diff-btn.active-warmup    { background: var(--warmup-soft);    border-color: var(--warmup);    color: var(--warmup); }
+.diff-btn.active-adventure { background: var(--adventure-soft); border-color: var(--adventure); color: var(--adventure); }
+.diff-btn.active-legend    { background: var(--legend-soft);    border-color: var(--legend);    color: var(--legend); }
+
+.diff-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-warmup    { background: var(--warmup); }
+.dot-adventure { background: var(--adventure); }
+.dot-legend    { background: var(--legend); }
+
+/* Env filter */
+.env-btns { display: flex; gap: 6px; }
+.env-btn {
+  flex: 1;
+  padding: 0.5rem 0.4rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.18s;
+}
+.env-btn:hover { border-color: var(--border2); color: var(--text); }
+.env-btn.active { background: var(--cyan-soft); border-color: var(--cyan); color: var(--cyan); }
+
+/* Category filter */
+.cat-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.cat-btn {
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text3);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.cat-btn:hover { border-color: var(--border2); color: var(--text2); }
+.cat-btn.active { background: var(--cyan-soft); border-color: var(--cyan); color: var(--cyan); }
+
+/* Streak */
+.streak-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.streak-flame {
+  font-size: 1.8rem;
+  animation: flicker 2s ease infinite alternate;
+}
+@keyframes flicker {
+  from { filter: brightness(1); }
+  to   { filter: brightness(1.3) drop-shadow(0 0 6px #ff6d00); }
+}
+.streak-num {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--amber);
+  line-height: 1;
+}
+.streak-label { font-size: 0.7rem; color: var(--text3); }
+
+/* ── MAIN AREA ── */
+.main-area { display: flex; flex-direction: column; gap: 1.5rem; }
+
+/* ── GENERATE BUTTON ── */
+.generate-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-generate {
+  position: relative;
+  background: transparent;
+  border: 1px solid var(--cyan);
+  border-radius: var(--radius-xl);
+  color: var(--cyan);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 1rem 3rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.25s;
+  box-shadow: 0 0 20px var(--cyan-glow), inset 0 0 20px rgba(0,229,255,0.03);
+}
+.btn-generate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--cyan);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 0;
+}
+.btn-generate:hover::before { transform: translateX(0); }
+.btn-generate:hover { color: var(--bg); box-shadow: 0 0 40px var(--cyan-glow); }
+.btn-generate span { position: relative; z-index: 1; }
+.btn-generate:active { transform: scale(0.97); }
+
+.generate-hint { font-size: 0.75rem; color: var(--text3); }
+
+/* ── QUEST CARD ── */
+.quest-card-wrap {
+  perspective: 1000px;
+  min-height: 280px;
+  display: flex;
+  align-items: stretch;
+}
+
+.quest-card {
+  width: 100%;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border2);
+  padding: 2rem;
+  display: none;
+  flex-direction: column;
+  gap: 1.2rem;
+  position: relative;
+  overflow: hidden;
+  animation: cardReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.quest-card.visible { display: flex; }
+
+/* Corner accent glow */
+.quest-card::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 150px; height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--card-glow, rgba(0,229,255,0.08)), transparent 70%);
+  pointer-events: none;
+}
+
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.quest-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.quest-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.badge {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 100px;
+  border: 1px solid transparent;
+}
+.badge-warmup    { background: var(--warmup-soft);    border-color: var(--warmup);    color: var(--warmup); }
+.badge-adventure { background: var(--adventure-soft); border-color: var(--adventure); color: var(--adventure); }
+.badge-legend    { background: var(--legend-soft);    border-color: var(--legend);    color: var(--legend); }
+.badge-indoor  { background: var(--purple-soft); border-color: var(--purple); color: var(--purple); }
+.badge-outdoor { background: var(--green-soft);  border-color: var(--green);  color: var(--green); }
+.badge-mixed   { background: var(--cyan-soft);   border-color: var(--cyan);   color: var(--cyan); }
+.badge-cat     { background: var(--surface2); border-color: var(--border2); color: var(--text2); }
+
+.quest-rarity {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text3);
+  white-space: nowrap;
+}
+
+.quest-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.quest-desc {
+  font-size: 0.92rem;
+  color: var(--text2);
+  line-height: 1.75;
+  font-weight: 300;
+}
+
+.quest-meta {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.quest-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text2);
+}
+.meta-icon { font-size: 0.9rem; }
+
+.quest-twist {
+  background: rgba(255,179,0,0.05);
+  border: 1px solid rgba(255,179,0,0.2);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  font-size: 0.82rem;
+  color: var(--amber);
+  line-height: 1.5;
+}
+.quest-twist strong { font-weight: 500; letter-spacing: 0.04em; }
+
+/* ── XP REWARD BADGE ── */
+.xp-reward {
+  position: absolute;
+  top: 1.5rem; right: 1.5rem;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.7rem;
+  text-align: center;
+}
+.xp-reward-val {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--cyan);
+  line-height: 1;
+}
+.xp-reward-label {
+  font-size: 0.6rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ── ACTION BUTTONS ── */
+.quest-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  letter-spacing: 0.02em;
+}
+.btn:hover { background: var(--surface2); color: var(--text); }
+
+.btn-accept {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--green);
+}
+.btn-accept:hover { background: var(--green); color: var(--bg); }
+
+.btn-save {
+  background: var(--cyan-soft);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+.btn-save:hover { background: var(--cyan); color: var(--bg); }
+
+.btn-reroll {
+  background: var(--amber-soft);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.btn-reroll:hover { background: var(--amber); color: var(--bg); }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  width: 100%;
+  background: var(--surface);
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius-xl);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--text3);
+}
+.empty-icon { font-size: 2.5rem; opacity: 0.3; }
+.empty-state h3 { font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; letter-spacing: 0.08em; color: var(--text3); }
+.empty-state p  { font-size: 0.8rem; text-align: center; max-width: 220px; line-height: 1.5; }
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  gap: 4px;
+}
+.tab {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+.tab:hover:not(.active) { color: var(--text2); }
+
+/* ── TAB CONTENT ── */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── HISTORY LIST ── */
+.history-list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+.history-list::-webkit-scrollbar { width: 3px; }
+.history-list::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.82rem;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+
+.history-status {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-accepted { background: var(--green); }
+.status-skipped  { background: var(--text3); }
+.status-saved    { background: var(--cyan); }
+
+.history-name { flex: 1; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-diff { font-size: 0.68rem; font-family: 'DM Mono', monospace; color: var(--text3); white-space: nowrap; }
+
+/* ── SAVED LIST ── */
+.saved-list { display: flex; flex-direction: column; gap: 8px; }
+.saved-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  animation: fadeIn 0.2s ease;
+}
+.saved-info { flex: 1; min-width: 0; }
+.saved-name { font-size: 0.875rem; color: var(--text); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.saved-meta { font-size: 0.7rem; color: var(--text3); }
+.btn-remove {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text3);
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-remove:hover { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 100px;
+  color: var(--text);
+  font-size: 0.82rem;
+  padding: 0.55rem 1.2rem;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── LEVEL UP FLASH ── */
+.level-flash {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,229,255,0.04);
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.level-flash.show { opacity: 1; }
+
+/* ── EMPTY LIST ── */
+.empty-list {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text3);
+  font-size: 0.82rem;
+}
+
+/* ── DAILY QUEST BANNER ── */
+.daily-banner {
+  background: var(--surface);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+.daily-icon { font-size: 1.5rem; }
+.daily-body { flex: 1; }
+.daily-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cyan);
+  margin-bottom: 2px;
+}
+.daily-title { font-size: 0.9rem; font-weight: 500; color: var(--text); }
+.daily-xp {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--cyan);
+  background: var(--cyan-soft);
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid rgba(0,229,255,0.2);
+  white-space: nowrap;
+}
+
+@media (max-width: 800px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  .header-stats { gap: 1rem; }
+  .xp-wrap { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="level-flash" id="level-flash"></div>
+<div id="toast"></div>
+
+<div class="app">
+
+  <!-- ══════════ HEADER ══════════ -->
+  <header>
+    <div class="logo">
+      <div class="logo-name">⚔ SideQuestly</div>
+      <div class="logo-sub">Real-Life Side Quest Generator</div>
+    </div>
+    <div class="header-stats">
+      <div class="hstat">
+        <div class="hstat-val" id="h-level">1</div>
+        <div class="hstat-label">Level</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-val" id="h-completed">0</div>
+        <div class="hstat-label">Completed</div>
+      </div>
+      <div class="xp-wrap">
+        <div class="xp-row">
+          <span style="color:var(--cyan);font-size:0.65rem;letter-spacing:0.06em;">XP</span>
+          <span id="xp-label">0 / 100</span>
+        </div>
+        <div class="xp-bar-bg">
+          <div class="xp-bar-fill" id="xp-fill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════ MAIN GRID ══════════ -->
+  <div class="main-grid">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+
+      <!-- Daily Quest -->
+      <div class="daily-banner" id="daily-banner">
+        <div class="daily-icon">⭐</div>
+        <div class="daily-body">
+          <div class="daily-label">Daily Quest</div>
+          <div class="daily-title" id="daily-title">Loading...</div>
+        </div>
+        <div class="daily-xp" id="daily-xp">+50 XP</div>
+      </div>
+
+      <!-- Difficulty Filter -->
+      <div class="panel">
+        <div class="panel-title">Difficulty</div>
+        <div class="filter-group">
+          <div class="filter-label">Select tiers</div>
+          <button class="diff-btn active-warmup"    data-diff="warmup"    onclick="toggleDiff(this)">
+            <div class="diff-dot dot-warmup"></div> Warm-up Quests
+          </button>
+          <button class="diff-btn active-adventure" data-diff="adventure" onclick="toggleDiff(this)">
+            <div class="diff-dot dot-adventure"></div> Adventure Quests
+          </button>
+          <button class="diff-btn active-legend"    data-diff="legend"    onclick="toggleDiff(this)">
+            <div class="diff-dot dot-legend"></div> Legend Quests
+          </button>
+        </div>
+
+        <div class="panel-title" style="margin-top:1rem;">Environment</div>
+        <div class="env-btns">
+          <button class="env-btn active" data-env="all"     onclick="setEnv(this)">All</button>
+          <button class="env-btn"        data-env="indoor"  onclick="setEnv(this)">Indoor</button>
+          <button class="env-btn"        data-env="outdoor" onclick="setEnv(this)">Outdoor</button>
+        </div>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="panel">
+        <div class="panel-title">Category</div>
+        <div class="cat-grid" id="cat-grid"></div>
+      </div>
+
+      <!-- Streak -->
+      <div class="panel">
+        <div class="panel-title">Streak</div>
+        <div class="streak-display">
+          <div class="streak-flame">🔥</div>
+          <div>
+            <div class="streak-num" id="streak-num">0</div>
+            <div class="streak-label">day streak</div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ── MAIN AREA ── -->
+    <div class="main-area">
+
+      <!-- Generate -->
+      <div class="generate-wrap">
+        <button class="btn-generate" onclick="generateQuest()">
+          <span>⚡ Generate Quest</span>
+        </button>
+        <div class="generate-hint" id="generate-hint">Select filters and roll your fate</div>
+      </div>
+
+      <!-- Quest Card -->
+      <div class="quest-card-wrap">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">🗺</div>
+          <h3>NO ACTIVE QUEST</h3>
+          <p>Click Generate Quest to receive your next challenge</p>
+        </div>
+        <div class="quest-card" id="quest-card">
+          <div class="xp-reward">
+            <div class="xp-reward-val" id="card-xp">+20</div>
+            <div class="xp-reward-label">XP</div>
+          </div>
+          <div class="quest-card-header">
+            <div class="quest-badges" id="card-badges"></div>
+            <div class="quest-rarity" id="card-rarity"></div>
+          </div>
+          <div class="quest-title"  id="card-title"></div>
+          <div class="quest-desc"   id="card-desc"></div>
+          <div class="quest-meta">
+            <div class="quest-meta-item"><span class="meta-icon">⏱</span><span id="card-time"></span></div>
+            <div class="quest-meta-item"><span class="meta-icon">🏷</span><span id="card-cat"></span></div>
+            <div class="quest-meta-item"><span class="meta-icon">📍</span><span id="card-env"></span></div>
+          </div>
+          <div class="quest-twist" id="card-twist" style="display:none;"></div>
+          <div class="quest-actions">
+            <button class="btn btn-accept" onclick="acceptQuest()">✓ Accept Quest</button>
+            <button class="btn btn-save"   onclick="saveQuest()">⊕ Save for Later</button>
+            <button class="btn btn-reroll" onclick="rerollQuest()">↻ Reroll</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs: History / Saved -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('history', this)">Quest History</button>
+        <button class="tab"        onclick="switchTab('saved', this)">Saved Quests</button>
+      </div>
+
+      <div class="panel">
+        <div class="tab-content active" id="tab-history">
+          <div class="history-list" id="history-list">
+            <div class="empty-list">No quest history yet. Start your adventure!</div>
+          </div>
+        </div>
+        <div class="tab-content" id="tab-saved">
+          <div class="saved-list" id="saved-list">
+            <div class="empty-list">No saved quests. Hit "Save for Later" on a quest card.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   ██████╗  █████╗ ████████╗ █████╗     ███████╗████████╗ ██████╗ ██████╗ ███████╗
+   ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗    ██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██╔════╝
+   ██║  ██║███████║   ██║   ███████║    ███████╗   ██║   ██║   ██║██████╔╝█████╗
+   ██║  ██║██╔══██║   ██║   ██╔══██║    ╚════██║   ██║   ██║   ██║██╔══██╗██╔══╝
+   ██████╔╝██║  ██║   ██║   ██║  ██║    ███████║   ██║   ╚██████╔╝██║  ██║███████╗
+   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝   ╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝
+
+   TO ADD A NEW QUEST: Copy any quest object below and paste it at the end
+   of the QUESTS array. Change the id and fill in the fields. That's it.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const QUESTS = [
+  /* ─── WARM-UP QUESTS ─────────────────────────────────────────────── */
+  {
+    id: 1,
+    title: "Is It Raining?",
+    description: "Go to a random stranger and ask them if its raining",
+    difficulty: "warmup",
+    environment: "outdoor",
+    category: "Social",
+    timeEstimate: "Throughout the day",
+    twist: null
+  },
+  {
+    id: 2,
+    title: "Digital Detox Hour",
+    description: "Put your phone in another room and spend 60 minutes doing something completely offline. Read, draw, cook, stretch. Anything without a screen.",
+    difficulty: "warmup",
+    environment: "indoor",
+    category: "Productivity",
+    timeEstimate: "1 hour",
+    twist: null
+  },
+  {
+    id: 3,
+    title: "3 Photo Challenge",
+    description: "Take pictures of 3 random objects and make them look artistic.",
+    difficulty: "Creativity",
+    environment: "mixed",
+    category: "Social",
+    timeEstimate: "Throughout the day",
+    twist: "Twist: Don't limit yourself to 3 pictures."
+  },
+  {
+    id: 4,
+    title: "Digital Reset",
+    description: "Delete 5 useless screenshots, files, or apps you do not need anymore.",
+    difficulty: "warmup",
+    environment: "indoor",
+    category: "Productivity",
+    timeEstimate: "20 minutes",
+    twist: "Twist: Clean the entire room."
+  },
+  {
+    id: 5,
+    title: "Out of Context",
+    description: "Go upto a random person and say something completely random with no context and walk away",
+    difficulty: "warmup",
+    environment: "outdoor",
+    category: "Social",
+    timeEstimate: "30 minutes",
+    twist: null
+  },
+  {
+    id: 6,
+    title: "Stair Challenge",
+    description: "Keep going up and down the stairs for 30 minutes.",
+    difficulty: "warmup",
+    environment: "indoor",
+    category: "Physical",
+    timeEstimate: "30 minutes",
+    twist: null
+  },
+  {
+    id: 7,
+    title: "Stretch & Breathe",
+    description: "Do 10 minutes of intentional stretching followed by 5 minutes of deep breathing. No YouTube, no music. Just you and your body.",
+    difficulty: "warmup",
+    environment: "indoor",
+    category: "Physical",
+    timeEstimate: "15 minutes",
+    twist: null
+  },
+  {
+    id: 8,
+    title: "Learn One Thing",
+    description: "Spend 30 minutes learning something you've always been curious about. Wikipedia rabbit holes count. You must be able to explain it to someone afterwards.",
+    difficulty: "warmup",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "30 minutes",
+    twist: "Twist: Actually explain it to someone before the day is over."
+  },
+
+  /* ─── ADVENTURE QUESTS ───────────────────────────────────────────── */
+  {
+    id: 9,
+    title: "Fake Product Design",
+    description: "Design a completely useless product. Can be anything.",
+    difficulty: "Creativity",
+    environment: "outdoor",
+    category: "Creativity",
+    timeEstimate: "1 hour",
+    twist: null
+  },
+  {
+    id: 10,
+    title: "Selfie With a Stranger",
+    description: "Take a selfie with a random stranger you have never met.",
+    difficulty: "adventure",
+    environment: "outdoor",
+    category: "Physical",
+    timeEstimate: "15 minutes",
+    twist: null
+  },
+  {
+    id: 11,
+    title: "Cook Something From Scratch",
+    description: "Make a full meal entirely from scratch. No ready meals, no jar sauces. Find a recipe for something you've never made, get the ingredients, and cook it.",
+    difficulty: "adventure",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "1-2 hours",
+    twist: "Twist: Cook for someone else, not just yourself."
+  },
+  {
+    id: 12,
+    title: "Street Story Snapshot",
+    description: "Go to a random spot, take a picture and post it on your story with a made up story about that spot.",
+    difficulty: "adventure",
+    environment: "outdoor",
+    category: "Creativity",
+    timeEstimate: "30 minutes",
+    twist: null
+  },
+  {
+    id: 13,
+    title: "Urban Sketcher",
+    description: "Go somewhere public, a park, café, or street, and spend 45 minutes sketching what you see. You don't need to be good. Just observe and draw.",
+    difficulty: "adventure",
+    environment: "outdoor",
+    category: "Creativity",
+    timeEstimate: "1 hour",
+    twist: "Bonus: Post it online."
+  },
+  {
+    id: 14,
+    title: "Object Upgrade Concept",
+    description: "Pick any object nearby and redesign it in your mind into a futuristic version and describe its new abilities.",
+    difficulty: "adventure",
+    environment: "mixed",
+    category: "Creativity",
+    timeEstimate: "Full day",
+    twist: null
+  },
+  {
+    id: 15,
+    title: "Random Landmark Hunt",
+    description: "Pick a direction and walk until you find a landmark you have never properly noticed, then take a photo of it like a tourist.",
+    difficulty: "adventure",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "2 hours",
+    twist: null
+  },
+  {
+    id: 16,
+    title: "100 Reps Challenge",
+    description: "Pick one bodyweight exercise (push-ups, squats, sit-ups) and do 100 reps total today. Split them however you want. 10 sets of 10, 4 sets of 25, anything.",
+    difficulty: "adventure",
+    environment: "indoor",
+    category: "Physical",
+    timeEstimate: "Throughout the day",
+    twist: null
+  },
+  {
+    id: 17,
+    title: "Item Removal.",
+    description: "Get rid of something that is useless but you've been too lazy to get rid of.",
+    difficulty: "adventure",
+    environment: "indoor",
+    category: "Productivity",
+    timeEstimate: "1 hour",
+    twist: "Twist: Tell someone what you worked on by the end of the day. Accountability helps."
+  },
+  {
+    id: 18,
+    title: "The Sunrise Mission",
+    description: "Wake up before sunrise, go outside, and watch the sun come up. Bring nothing to do. Just be there, watch, and think.",
+    difficulty: "adventure",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "1 hour",
+    twist: "Bonus: Bring a flask of something warm. You've earned it."
+  },
+
+  /* ─── LEGEND QUESTS ──────────────────────────────────────────────── */
+  {
+    id: 19,
+    title: "Talk to a Stranger",
+    description: "Start a real, full conversation with a complete stranger - not just pleasantries. Ask them something genuine about their life. Really listen.",
+    difficulty: "legend",
+    environment: "outdoor",
+    category: "Social",
+    timeEstimate: "20–60 minutes",
+    twist: "Twist: The stranger must be at least 20 years older or younger than you."
+  },
+  {
+    id: 20,
+    title: "The Overnight Fast",
+    description: "Don't eat for 18 hours. Drink water, tea, coffee (black). Use the time you'd spend eating to do something meaningful instead. Break the fast mindfully.",
+    difficulty: "legend",
+    environment: "mixed",
+    category: "Physical",
+    timeEstimate: "18 hours",
+    twist: null
+  },
+  {
+    id: 21,
+    title: "Volunteer Your Time",
+    description: "Find a local volunteer opportunity and give at least 3 hours of your time this week. Food banks, community gardens, charity shops - anywhere you're needed.",
+    difficulty: "legend",
+    environment: "outdoor",
+    category: "Social",
+    timeEstimate: "Half a day",
+    twist: "Twist: Go alone so you're forced to meet new people."
+  },
+  {
+    id: 22,
+    title: "Create & Publish Something",
+    description: "Make something creative - a short video, a piece of writing, a drawing, a song, anything - and put it out into the world. Post it publicly. Ship it.",
+    difficulty: "legend",
+    environment: "indoor",
+    category: "Creativity",
+    timeEstimate: "3–5 hours",
+    twist: "Twist: Don't edit it for more than 30 minutes. Done is better than perfect."
+  },
+  {
+    id: 23,
+    title: "The 5AM Club",
+    description: "For 3 days in a row, wake up at 5am. Use the first hour for yourself - exercise, reading, journaling, or planning. No phone for the first 30 minutes.",
+    difficulty: "legend",
+    environment: "mixed",
+    category: "Productivity",
+    timeEstimate: "3 days",
+    twist: "Twist: Tell no one until it's done. Let the results speak."
+  },
+  {
+    id: 24,
+    title: "The Lost Weekend Explorer",
+    description: "Pick a town or city within 2 hours of you that you've never visited. Go there for the day with no plan - no Google Maps, no itinerary. Just explore and figure it out.",
+    difficulty: "legend",
+    environment: "outdoor",
+    category: "Exploration",
+    timeEstimate: "Full day",
+    twist: "Bonus: Eat somewhere with no English on the menu."
+  },
+  {
+    id: 25,
+    title: "Learn & Teach",
+    description: "Spend one week learning a new skill - even just the basics. Then teach what you've learned to at least one other person by the end of the week.",
+    difficulty: "legend",
+    environment: "mixed",
+    category: "Creativity",
+    timeEstimate: "1 week",
+    twist: "Twist: Document your progress daily in writing, photos, or video."
+  },
+  {
+    id: 26,
+    title: "30-Day No-Social-Media",
+    description: "Delete all social media apps from your phone for 30 days. Use the time you reclaim for literally anything else. Track what you do with the freed time.",
+    difficulty: "legend",
+    environment: "mixed",
+    category: "Productivity",
+    timeEstimate: "30 days",
+    twist: "Twist: Tell someone on social media you're leaving, then log off."
+  },
+  {
+    id: 27,
+    title: "Night Run",
+    description: "Go for a run at night - after 9pm. Pick a route that's safe but unfamiliar. No music, just the sound of the city or silence. Run for at least 30 minutes.",
+    difficulty: "legend",
+    environment: "outdoor",
+    category: "Physical",
+    timeEstimate: "45 minutes",
+    twist: "Twist: Run somewhere you've never been in daylight. Navigate by feel."
+  }
+
+  /* ───────────────────────────────────────────────────────────────────
+     ADD NEW QUESTS HERE - just copy the block above and paste it.
+     Make sure to:
+       1. Give it a unique id (increment from the last one)
+       2. Set difficulty to: "warmup" | "adventure" | "legend"
+       3. Set environment to: "indoor" | "outdoor" | "mixed"
+       4. Set twist to null if there's no twist
+     ─────────────────────────────────────────────────────────────────── */
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   XP SYSTEM - how much XP each difficulty gives on accept
+   ═══════════════════════════════════════════════════════════════ */
+const XP_REWARDS = { warmup: 20, adventure: 50, legend: 100 };
+const XP_PER_LEVEL = 100; // XP needed to level up (scales linearly for now)
+
+/* ═══════════════════════════════════════════════════════════════
+   APP STATE
+   ═══════════════════════════════════════════════════════════════ */
+let state = {
+  xp:          0,
+  level:       1,
+  completed:   0,
+  streak:      0,
+  lastDate:    null,
+  history:     [],   // max 10 items
+  saved:       [],
+  activeDiffs: new Set(['warmup','adventure','legend']),
+  activeEnv:   'all',
+  activeCats:  new Set(),  // empty = all cats
+  currentQuest: null,
+  dailyQuest:   null,
+  dailyDone:    false,
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════ */
+(function init() {
+  loadState();
+  buildCategoryFilters();
+  setDailyQuest();
+  updateHeader();
+  renderHistory();
+  renderSaved();
+  updateStreakDisplay();
+})();
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('sidequestly_state');
+    if (saved) Object.assign(state, JSON.parse(saved), {
+      activeDiffs: new Set(JSON.parse(saved).activeDiffsArr || ['warmup','adventure','legend']),
+      activeCats:  new Set(JSON.parse(saved).activeCatsArr  || []),
+    });
+  } catch(e) {}
+}
+
+function saveState() {
+  const toSave = {
+    ...state,
+    activeDiffs: undefined,
+    activeCats:  undefined,
+    activeDiffsArr: [...state.activeDiffs],
+    activeCatsArr:  [...state.activeCats],
+    currentQuest: null,
+  };
+  localStorage.setItem('sidequestly_state', JSON.stringify(toSave));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CATEGORY FILTERS - auto-built from quest data
+   ═══════════════════════════════════════════════════════════════ */
+function buildCategoryFilters() {
+  const cats = [...new Set(QUESTS.map(q => q.category))].sort();
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = cats.map(c => `
+    <button class="cat-btn ${state.activeCats.has(c) ? 'active' : ''}"
+            data-cat="${c}" onclick="toggleCat(this)">${c}</button>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DAILY QUEST - seeded by date so it's the same all day
+   ═══════════════════════════════════════════════════════════════ */
+function setDailyQuest() {
+  const today = new Date().toDateString();
+  // Seed random with date string hashcode
+  let hash = 0;
+  for (let c of today) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
+  const idx = hash % QUESTS.length;
+  state.dailyQuest = QUESTS[idx];
+  document.getElementById('daily-title').textContent = state.dailyQuest.title;
+  document.getElementById('daily-xp').textContent   = '+' + (XP_REWARDS[state.dailyQuest.difficulty] * 2) + ' XP';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FILTER LOGIC
+   ═══════════════════════════════════════════════════════════════ */
+function toggleDiff(btn) {
+  const d = btn.dataset.diff;
+  if (state.activeDiffs.has(d)) {
+    if (state.activeDiffs.size === 1) { toast('At least one difficulty must be selected'); return; }
+    state.activeDiffs.delete(d);
+    btn.className = 'diff-btn';
+  } else {
+    state.activeDiffs.add(d);
+    btn.className = `diff-btn active-${d}`;
+  }
+  saveState();
+}
+
+function setEnv(btn) {
+  document.querySelectorAll('.env-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.activeEnv = btn.dataset.env;
+  saveState();
+}
+
+function toggleCat(btn) {
+  const cat = btn.dataset.cat;
+  if (state.activeCats.has(cat)) {
+    state.activeCats.delete(cat);
+    btn.classList.remove('active');
+  } else {
+    state.activeCats.add(cat);
+    btn.classList.add('active');
+  }
+  saveState();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   QUEST GENERATION
+   ═══════════════════════════════════════════════════════════════ */
+function getFilteredQuests(exclude = null) {
+  return QUESTS.filter(q => {
+    if (!state.activeDiffs.has(q.difficulty)) return false;
+    if (state.activeEnv !== 'all' && q.environment !== state.activeEnv) return false;
+    if (state.activeCats.size > 0 && !state.activeCats.has(q.category)) return false;
+    if (exclude && q.id === exclude) return false;
+    return true;
+  });
+}
+
+function generateQuest() {
+  const pool = getFilteredQuests(state.currentQuest?.id);
+  if (!pool.length) {
+    const fallback = getFilteredQuests();
+    if (!fallback.length) { toast('No quests match your filters. Adjust filters and try again.'); return; }
+    displayQuest(fallback[Math.floor(Math.random() * fallback.length)]);
+    return;
+  }
+  displayQuest(pool[Math.floor(Math.random() * pool.length)]);
+}
+
+function rerollQuest() {
+  if (!state.currentQuest) { generateQuest(); return; }
+  addToHistory(state.currentQuest, 'skipped');
+  generateQuest();
+}
+
+function displayQuest(quest) {
+  state.currentQuest = quest;
+
+  const card    = document.getElementById('quest-card');
+  const empty   = document.getElementById('empty-state');
+
+  // Glow colour based on difficulty
+  const glowMap = { warmup:'rgba(0,230,118,0.06)', adventure:'rgba(255,179,0,0.06)', legend:'rgba(255,71,87,0.06)' };
+  card.style.setProperty('--card-glow', glowMap[quest.difficulty]);
+
+  // Rarity label
+  const rarityMap = { warmup:'TIER I', adventure:'TIER II', legend:'TIER III ★' };
+
+  document.getElementById('card-title').textContent = quest.title;
+  document.getElementById('card-desc').textContent  = quest.description;
+  document.getElementById('card-time').textContent  = quest.timeEstimate;
+  document.getElementById('card-cat').textContent   = quest.category;
+  document.getElementById('card-env').textContent   = quest.environment.charAt(0).toUpperCase() + quest.environment.slice(1);
+  document.getElementById('card-rarity').textContent = rarityMap[quest.difficulty];
+  document.getElementById('card-xp').textContent    = '+' + XP_REWARDS[quest.difficulty];
+
+  // Badges
+  const badges = document.getElementById('card-badges');
+  badges.innerHTML = `
+    <span class="badge badge-${quest.difficulty}">${diffLabel(quest.difficulty)}</span>
+    <span class="badge badge-${quest.environment}">${quest.environment}</span>
+    <span class="badge badge-cat">${quest.category}</span>
+  `;
+
+  // Twist
+  const twistEl = document.getElementById('card-twist');
+  if (quest.twist) {
+    twistEl.innerHTML = `<strong>⚡ TWIST:</strong> ${quest.twist}`;
+    twistEl.style.display = 'block';
+  } else {
+    twistEl.style.display = 'none';
+  }
+
+  empty.style.display = 'none';
+  card.classList.remove('visible');
+  void card.offsetWidth; // force reflow to re-trigger animation
+  card.classList.add('visible');
+
+  document.getElementById('generate-hint').textContent = `Quest loaded - ${getFilteredQuests().length} quests available`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   QUEST ACTIONS
+   ═══════════════════════════════════════════════════════════════ */
+function acceptQuest() {
+  if (!state.currentQuest) return;
+  const quest = state.currentQuest;
+  const xpGain = XP_REWARDS[quest.difficulty];
+
+  // Daily quest bonus
+  const isDaily = state.dailyQuest && quest.id === state.dailyQuest.id && !state.dailyDone;
+  const totalXP = isDaily ? xpGain * 2 : xpGain;
+  if (isDaily) { state.dailyDone = true; toast(`⭐ Daily Quest accepted! +${totalXP} XP (2x bonus!)`); }
+  else toast(`Quest accepted! +${totalXP} XP`);
+
+  addXP(totalXP);
+  state.completed++;
+  updateStreak();
+  addToHistory(quest, 'accepted');
+  hideCard();
+  saveState();
+  updateHeader();
+}
+
+function saveQuest() {
+  if (!state.currentQuest) return;
+  const quest = state.currentQuest;
+  if (state.saved.find(q => q.id === quest.id)) { toast('Already saved!'); return; }
+  if (state.saved.length >= 20) { state.saved.shift(); }
+  state.saved.push(quest);
+  addToHistory(quest, 'saved');
+  toast('Quest saved for later!');
+  renderSaved();
+  saveState();
+}
+
+function removeFromSaved(id) {
+  state.saved = state.saved.filter(q => q.id !== id);
+  renderSaved();
+  saveState();
+  toast('Removed from saved');
+}
+
+function hideCard() {
+  state.currentQuest = null;
+  document.getElementById('quest-card').classList.remove('visible');
+  document.getElementById('empty-state').style.display = 'flex';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   XP & LEVELLING
+   ═══════════════════════════════════════════════════════════════ */
+function addXP(amount) {
+  state.xp += amount;
+  const xpNeeded = state.level * XP_PER_LEVEL;
+  if (state.xp >= xpNeeded) {
+    state.xp -= xpNeeded;
+    state.level++;
+    levelUpFlash();
+    toast(`🎉 LEVEL UP! You are now Level ${state.level}!`);
+  }
+  updateHeader();
+}
+
+function updateHeader() {
+  const xpNeeded = state.level * XP_PER_LEVEL;
+  document.getElementById('h-level').textContent     = state.level;
+  document.getElementById('h-completed').textContent = state.completed;
+  document.getElementById('xp-label').textContent    = `${state.xp} / ${xpNeeded}`;
+  document.getElementById('xp-fill').style.width     = Math.min(100, (state.xp / xpNeeded) * 100) + '%';
+}
+
+function levelUpFlash() {
+  const flash = document.getElementById('level-flash');
+  flash.classList.add('show');
+  setTimeout(() => flash.classList.remove('show'), 400);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STREAK
+   ═══════════════════════════════════════════════════════════════ */
+function updateStreak() {
+  const today = new Date().toDateString();
+  if (state.lastDate === today) return;
+
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (state.lastDate === yesterday) { state.streak++; }
+  else if (state.lastDate !== today) { state.streak = 1; }
+
+  state.lastDate = today;
+  updateStreakDisplay();
+}
+
+function updateStreakDisplay() {
+  document.getElementById('streak-num').textContent = state.streak;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HISTORY
+   ═══════════════════════════════════════════════════════════════ */
+function addToHistory(quest, status) {
+  state.history.unshift({ id: quest.id, title: quest.title, difficulty: quest.difficulty, status, time: Date.now() });
+  if (state.history.length > 10) state.history.pop();
+  renderHistory();
+  saveState();
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!state.history.length) {
+    el.innerHTML = '<div class="empty-list">No quest history yet. Start your adventure!</div>';
+    return;
+  }
+  el.innerHTML = state.history.map(h => `
+    <div class="history-item">
+      <div class="history-status status-${h.status}"></div>
+      <div class="history-name">${h.title}</div>
+      <div class="history-diff">${diffLabel(h.difficulty)} · ${h.status}</div>
+    </div>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SAVED QUESTS
+   ═══════════════════════════════════════════════════════════════ */
+function renderSaved() {
+  const el = document.getElementById('saved-list');
+  if (!state.saved.length) {
+    el.innerHTML = '<div class="empty-list">No saved quests. Hit "Save for Later" on a quest card.</div>';
+    return;
+  }
+  el.innerHTML = state.saved.map(q => `
+    <div class="saved-item">
+      <div class="saved-info">
+        <div class="saved-name">${q.title}</div>
+        <div class="saved-meta">${diffLabel(q.difficulty)} · ${q.category} · ${q.timeEstimate}</div>
+      </div>
+      <button class="btn-remove" onclick="removeFromSaved(${q.id})">Remove</button>
+    </div>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════════════════════════ */
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════════ */
+function diffLabel(d) {
+  return { warmup: 'Warm-up', adventure: 'Adventure', legend: 'Legend' }[d] || d;
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
